@@ -1,0 +1,18 @@
+[tool.poetry]
+name = "pytanque"
+version = "0.1.0"
+description = ""
+authors = [
+    "Guillaume Baudart <guillaume.baudart@inria.fr>",
+    "Emilio J. Gallego Arias <emilio-jesus.gallego-arias@inria.fr>",
+    "Laetitia Teodorescu <laetitia.teodorescu@inria.fr>"
+]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.10"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
