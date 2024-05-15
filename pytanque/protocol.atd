@@ -4,13 +4,11 @@ type error = {
 }
 
 type failure = {
-    ~jsonrpc <python default="'2.0'">: string;
     id: int;
     error: error;
 }
 
 type response = {
-    ~jsonrpc <python default="'2.0'">: string;
     id: int;
     result: abstract;
 }
@@ -21,14 +19,12 @@ type init_params = {
 }
 
 type init_request = {
-    ~jsonrpc <python default="'2.0'">: string;
     ~method <python default="'petanque/init'">: string;
     id: int;
     params: init_params;
 }
 
 type init_response = {
-    ~jsonrpc <python default="'2.0'">: string;
     id: int;
     result: int; 
 }
@@ -40,7 +36,6 @@ type start_params = {
 }
 
 type start_request = {
-    ~jsonrpc <python default="'2.0'">: string;
     ~method <python default="'petanque/start'">: string;
     id: int;
     params: start_params;
@@ -52,7 +47,6 @@ type run_params = {
 }
 
 type run_request = {
-    ~jsonrpc <python default="'2.0'">: string;
     ~method <python default="'petanque/run'">: string;
     id: int;
     params: run_params;
@@ -65,7 +59,6 @@ type goals_params = {
 }
 
 type goals_request = {
-    ~jsonrpc <python default="'2.0'">: string;
     ~method <python default="'petanque/goals'">: string;
     id: int;
     params: goals_params;
@@ -80,7 +73,6 @@ type premises_params = {
 }
 
 type premises_request = {
-    ~jsonrpc <python default="'2.0'">: string;
     ~method <python default="'petanque/premises'">: string;
     id: int;
     params: premises_params;

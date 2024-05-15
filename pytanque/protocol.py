@@ -300,7 +300,6 @@ class StartRequest:
 
     id: int
     params: StartParams
-    jsonrpc: str = field(default_factory=lambda: '2.0')
     method: str = field(default_factory=lambda: 'petanque/start')
 
     @classmethod
@@ -309,7 +308,6 @@ class StartRequest:
             return cls(
                 id=_atd_read_int(x['id']) if 'id' in x else _atd_missing_json_field('StartRequest', 'id'),
                 params=StartParams.from_json(x['params']) if 'params' in x else _atd_missing_json_field('StartRequest', 'params'),
-                jsonrpc=_atd_read_string(x['jsonrpc']) if 'jsonrpc' in x else '2.0',
                 method=_atd_read_string(x['method']) if 'method' in x else 'petanque/start',
             )
         else:
@@ -319,7 +317,6 @@ class StartRequest:
         res: Dict[str, Any] = {}
         res['id'] = _atd_write_int(self.id)
         res['params'] = (lambda x: x.to_json())(self.params)
-        res['jsonrpc'] = _atd_write_string(self.jsonrpc)
         res['method'] = _atd_write_string(self.method)
         return res
 
@@ -437,7 +434,6 @@ class RunRequest:
 
     id: int
     params: RunParams
-    jsonrpc: str = field(default_factory=lambda: '2.0')
     method: str = field(default_factory=lambda: 'petanque/run')
 
     @classmethod
@@ -446,7 +442,6 @@ class RunRequest:
             return cls(
                 id=_atd_read_int(x['id']) if 'id' in x else _atd_missing_json_field('RunRequest', 'id'),
                 params=RunParams.from_json(x['params']) if 'params' in x else _atd_missing_json_field('RunRequest', 'params'),
-                jsonrpc=_atd_read_string(x['jsonrpc']) if 'jsonrpc' in x else '2.0',
                 method=_atd_read_string(x['method']) if 'method' in x else 'petanque/run',
             )
         else:
@@ -456,7 +451,6 @@ class RunRequest:
         res: Dict[str, Any] = {}
         res['id'] = _atd_write_int(self.id)
         res['params'] = (lambda x: x.to_json())(self.params)
-        res['jsonrpc'] = _atd_write_string(self.jsonrpc)
         res['method'] = _atd_write_string(self.method)
         return res
 
@@ -474,7 +468,6 @@ class Response:
 
     id: int
     result: Any
-    jsonrpc: str = field(default_factory=lambda: '2.0')
 
     @classmethod
     def from_json(cls, x: Any) -> 'Response':
@@ -482,7 +475,6 @@ class Response:
             return cls(
                 id=_atd_read_int(x['id']) if 'id' in x else _atd_missing_json_field('Response', 'id'),
                 result=(lambda x: x)(x['result']) if 'result' in x else _atd_missing_json_field('Response', 'result'),
-                jsonrpc=_atd_read_string(x['jsonrpc']) if 'jsonrpc' in x else '2.0',
             )
         else:
             _atd_bad_json('Response', x)
@@ -491,7 +483,6 @@ class Response:
         res: Dict[str, Any] = {}
         res['id'] = _atd_write_int(self.id)
         res['result'] = (lambda x: x)(self.result)
-        res['jsonrpc'] = _atd_write_string(self.jsonrpc)
         return res
 
     @classmethod
@@ -557,7 +548,6 @@ class PremisesRequest:
 
     id: int
     params: PremisesParams
-    jsonrpc: str = field(default_factory=lambda: '2.0')
     method: str = field(default_factory=lambda: 'petanque/premises')
 
     @classmethod
@@ -566,7 +556,6 @@ class PremisesRequest:
             return cls(
                 id=_atd_read_int(x['id']) if 'id' in x else _atd_missing_json_field('PremisesRequest', 'id'),
                 params=PremisesParams.from_json(x['params']) if 'params' in x else _atd_missing_json_field('PremisesRequest', 'params'),
-                jsonrpc=_atd_read_string(x['jsonrpc']) if 'jsonrpc' in x else '2.0',
                 method=_atd_read_string(x['method']) if 'method' in x else 'petanque/premises',
             )
         else:
@@ -576,7 +565,6 @@ class PremisesRequest:
         res: Dict[str, Any] = {}
         res['id'] = _atd_write_int(self.id)
         res['params'] = (lambda x: x.to_json())(self.params)
-        res['jsonrpc'] = _atd_write_string(self.jsonrpc)
         res['method'] = _atd_write_string(self.method)
         return res
 
@@ -594,7 +582,6 @@ class InitResponse:
 
     id: int
     result: int
-    jsonrpc: str = field(default_factory=lambda: '2.0')
 
     @classmethod
     def from_json(cls, x: Any) -> 'InitResponse':
@@ -602,7 +589,6 @@ class InitResponse:
             return cls(
                 id=_atd_read_int(x['id']) if 'id' in x else _atd_missing_json_field('InitResponse', 'id'),
                 result=_atd_read_int(x['result']) if 'result' in x else _atd_missing_json_field('InitResponse', 'result'),
-                jsonrpc=_atd_read_string(x['jsonrpc']) if 'jsonrpc' in x else '2.0',
             )
         else:
             _atd_bad_json('InitResponse', x)
@@ -611,7 +597,6 @@ class InitResponse:
         res: Dict[str, Any] = {}
         res['id'] = _atd_write_int(self.id)
         res['result'] = _atd_write_int(self.result)
-        res['jsonrpc'] = _atd_write_string(self.jsonrpc)
         return res
 
     @classmethod
@@ -659,7 +644,6 @@ class InitRequest:
 
     id: int
     params: InitParams
-    jsonrpc: str = field(default_factory=lambda: '2.0')
     method: str = field(default_factory=lambda: 'petanque/init')
 
     @classmethod
@@ -668,7 +652,6 @@ class InitRequest:
             return cls(
                 id=_atd_read_int(x['id']) if 'id' in x else _atd_missing_json_field('InitRequest', 'id'),
                 params=InitParams.from_json(x['params']) if 'params' in x else _atd_missing_json_field('InitRequest', 'params'),
-                jsonrpc=_atd_read_string(x['jsonrpc']) if 'jsonrpc' in x else '2.0',
                 method=_atd_read_string(x['method']) if 'method' in x else 'petanque/init',
             )
         else:
@@ -678,7 +661,6 @@ class InitRequest:
         res: Dict[str, Any] = {}
         res['id'] = _atd_write_int(self.id)
         res['params'] = (lambda x: x.to_json())(self.params)
-        res['jsonrpc'] = _atd_write_string(self.jsonrpc)
         res['method'] = _atd_write_string(self.method)
         return res
 
@@ -752,7 +734,6 @@ class GoalsRequest:
 
     id: int
     params: GoalsParams
-    jsonrpc: str = field(default_factory=lambda: '2.0')
     method: str = field(default_factory=lambda: 'petanque/goals')
 
     @classmethod
@@ -761,7 +742,6 @@ class GoalsRequest:
             return cls(
                 id=_atd_read_int(x['id']) if 'id' in x else _atd_missing_json_field('GoalsRequest', 'id'),
                 params=GoalsParams.from_json(x['params']) if 'params' in x else _atd_missing_json_field('GoalsRequest', 'params'),
-                jsonrpc=_atd_read_string(x['jsonrpc']) if 'jsonrpc' in x else '2.0',
                 method=_atd_read_string(x['method']) if 'method' in x else 'petanque/goals',
             )
         else:
@@ -771,7 +751,6 @@ class GoalsRequest:
         res: Dict[str, Any] = {}
         res['id'] = _atd_write_int(self.id)
         res['params'] = (lambda x: x.to_json())(self.params)
-        res['jsonrpc'] = _atd_write_string(self.jsonrpc)
         res['method'] = _atd_write_string(self.method)
         return res
 
@@ -820,7 +799,6 @@ class Failure:
 
     id: int
     error: Error
-    jsonrpc: str = field(default_factory=lambda: '2.0')
 
     @classmethod
     def from_json(cls, x: Any) -> 'Failure':
@@ -828,7 +806,6 @@ class Failure:
             return cls(
                 id=_atd_read_int(x['id']) if 'id' in x else _atd_missing_json_field('Failure', 'id'),
                 error=Error.from_json(x['error']) if 'error' in x else _atd_missing_json_field('Failure', 'error'),
-                jsonrpc=_atd_read_string(x['jsonrpc']) if 'jsonrpc' in x else '2.0',
             )
         else:
             _atd_bad_json('Failure', x)
@@ -837,7 +814,6 @@ class Failure:
         res: Dict[str, Any] = {}
         res['id'] = _atd_write_int(self.id)
         res['error'] = (lambda x: x.to_json())(self.error)
-        res['jsonrpc'] = _atd_write_string(self.jsonrpc)
         return res
 
     @classmethod
