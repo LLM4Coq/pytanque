@@ -1,5 +1,5 @@
 Require Import Omega.
-
+From Coq Require Import ssreflect ssrbool.
 Theorem t:
     forall n: nat, 1 + n > n.
 Proof.
