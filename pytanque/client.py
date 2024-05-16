@@ -3,7 +3,7 @@ import json
 import os
 import pathlib
 from collections import deque
-from typing import Union
+from typing import Union, List, Any
 from .protocol import (
     Request,
     Response,
@@ -119,13 +119,13 @@ class Pytanque:
             case _:
                 raise PetanqueError("Invalid proof state")
 
-    def goals(self):
+    def goals(self) -> List[Any]:
         resp = self.query(GoalsParams(self.current_state()))
         res = GoalsResponse.from_json(resp.result)
         print(f"Goals: {res.goals}")
         return res.goals
 
-    def premises(self):
+    def premises(self) -> List[Any]:
         resp = self.query(PremisesParams(self.current_state()))
         res = PremisesResponse.from_json(resp.result)
         print(f"Retrieved {len(res.value)} premises")
