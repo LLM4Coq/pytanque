@@ -50,11 +50,18 @@ def mk_request(id, params: Params) -> Request:
 
 
 class Pytanque:
+    """
+    Petanque client to communicate with the Rocq theorem prover using JSON-RPC over a simple socket.
+    """
+
     def __enter__(self):
         self.socket.connect((self.host, self.port))
         return self
 
     def __init__(self, host: str, port: int):
+        """
+        Open socket given the [host] and [port].
+        """
         self.host = host
         self.port = port
         self.id = 0
@@ -65,6 +72,9 @@ class Pytanque:
         self.thm = ""
 
     def query(self, params: Params, size: int = 1024) -> Response:
+        """
+        Send a query to the server using JSON-RPC protocol.
+        """
         self.id += 1
         request = mk_request(self.id, params)
         payload = (json.dumps(request.to_json()) + "\n").encode()
@@ -86,9 +96,15 @@ class Pytanque:
             raise PetanqueError(failure.error)
 
     def current_state(self) -> int:
+        """
+        Return the current state of the prover.
+        """
         return self.queue[-1]
 
     def init(self, *, root: str):
+        """
+        Initialize Rocq enviorment (must only be called once).
+        """
         path = os.path.abspath(root)
         uri = pathlib.Path(path).as_uri()
         resp = self.query(InitParams(uri))
@@ -96,6 +112,9 @@ class Pytanque:
         print(f"Init success {self.env=}")
 
     def start(self, *, file: str, thm: str):
+        """
+        Start the proof of [thm] defined in [file].
+        """
         self.file = file
         self.thm = thm
         self.queue.clear()
@@ -106,6 +125,9 @@ class Pytanque:
         print(f"Start success. Current state:{self.current_state()}")
 
     def run_tac(self, tac: str):
+        """
+        Execute on tactic.
+        """
         resp = self.query(RunParams(self.current_state(), tac))
         res = RunResponse.from_json(resp.result)
         print(f"Run tac {tac}.")
@@ -120,19 +142,32 @@ class Pytanque:
                 raise PetanqueError("Invalid proof state")
 
     def goals(self) -> List[Any]:
+        """
+        Return the list of current goals.
+        """
         resp = self.query(GoalsParams(self.current_state()))
         res = GoalsResponse.from_json(resp.result)
         print(f"Goals: {res.goals}")
         return res.goals
 
     def premises(self) -> List[Any]:
+        """
+        Return the list of accessible premises.
+        """
         resp = self.query(PremisesParams(self.current_state()))
         res = PremisesResponse.from_json(resp.result)
         print(f"Retrieved {len(res.value)} premises")
         return res.value
 
-    def rollback(self):
-        self.queue.pop()
+    def rollback(self, n: int = 1):
+        """
+        Rollback [n] step of the proof.
+        """
+        for _ in range(n):
+            self.queue.pop()
 
     def __exit__(self, exc_type, exc_value, exc_tb):
+        """
+        Close the socket.
+        """
         self.socket.close()
