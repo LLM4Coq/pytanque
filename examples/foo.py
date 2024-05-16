@@ -7,6 +7,6 @@ with Pytanque("127.0.0.1", 8765) as pet:
     pet.goals()
     # pet.premises()
     pet.run_tac("simpl.")
-    pet.rollback()
-    pet.rollback()
+    print(f"backtrack {pet.backtrack()}")
+    print(f"backtrack {pet.backtrack()}")
     pet.run_tac("by elim: n => //= ? ->.")

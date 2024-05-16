@@ -3,7 +3,8 @@ import json
 import os
 import pathlib
 from collections import deque
-from typing import Union, List, Any
+from typing import Union, List, Tuple, Any
+from dataclasses import dataclass
 from .protocol import (
     Request,
     Response,
@@ -47,6 +48,16 @@ def mk_request(id, params: Params) -> Request:
             return Request(id, "petanque/premises", params.to_json())
         case _:
             raise PetanqueError("Invalid request params")
+
+
+@dataclass
+class State:
+    """
+    Prover state and action to be performed.
+    """
+
+    id: int
+    action: str
 
 
 class Pytanque:
@@ -99,7 +110,7 @@ class Pytanque:
         """
         Return the current state of the prover.
         """
-        return self.queue[-1]
+        return self.queue[-1].id
 
     def init(self, *, root: str):
         """
@@ -121,7 +132,7 @@ class Pytanque:
         path = os.path.abspath(file)
         uri = pathlib.Path(path).as_uri()
         resp = self.query(StartParams(self.env, uri, self.thm))
-        self.queue.append(resp.result)
+        self.queue.append(State(resp.result, "Start"))
         print(f"Start success. Current state:{self.current_state()}")
 
     def run_tac(self, tac: str):
@@ -133,10 +144,10 @@ class Pytanque:
         print(f"Run tac {tac}.")
         match res.value:
             case CurrentState(st):
-                self.queue.append(res.value.value)
+                self.queue.append(State(res.value.value, tac))
                 print(f"Current state:{self.current_state()}")
             case ProofFinished(st):
-                self.queue.append(res.value.value)
+                self.queue.append(State(res.value.value, tac))
                 print(f"Proof finished:{self.current_state()}")
             case _:
                 raise PetanqueError("Invalid proof state")
@@ -159,12 +170,15 @@ class Pytanque:
         print(f"Retrieved {len(res.value)} premises")
         return res.value
 
-    def rollback(self, n: int = 1):
+    def backtrack(self) -> Tuple[int, str]:
         """
-        Rollback [n] step of the proof.
+        Rollback one step of the proof.
         """
-        for _ in range(n):
-            self.queue.pop()
+        st = self.queue.pop()
+        return (st.id, st.action)
+
+    def reset(self):
+        self.start(file=self.file, thm=self.thm)
 
     def __exit__(self, exc_type, exc_value, exc_tb):
         """
