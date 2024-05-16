@@ -9,24 +9,21 @@ type failure = {
 }
 
 type response = {
+    ~jsonrpc <python default="'2.0'">: string;
     id: int;
     result: abstract;
+}
+
+type request = {
+    ~jsonrpc <python default="'2.0'">: string;
+    id: int;
+    method_ <json name="method">: string;
+    params: abstract
 }
 
 type init_params = {
     ~debug <python default="False">: bool;
     root: string;
-}
-
-type init_request = {
-    ~method <python default="'petanque/init'">: string;
-    id: int;
-    params: init_params;
-}
-
-type init_response = {
-    id: int;
-    result: int; 
 }
 
 type start_params = {
@@ -35,33 +32,15 @@ type start_params = {
     thm: string;
 }
 
-type start_request = {
-    ~method <python default="'petanque/start'">: string;
-    id: int;
-    params: start_params;
-}
-
 type run_params = {
     st: int;
     tac: string;
-}
-
-type run_request = {
-    ~method <python default="'petanque/run'">: string;
-    id: int;
-    params: run_params;
 }
 
 type run_response = [ Current_state of int | Proof_finished of int ]
 
 type goals_params = {
     st: int;
-}
-
-type goals_request = {
-    ~method <python default="'petanque/goals'">: string;
-    id: int;
-    params: goals_params;
 }
 
 type goals_response = {
@@ -72,10 +51,12 @@ type premises_params = {
     st: int;
 }
 
-type premises_request = {
-    ~method <python default="'petanque/premises'">: string;
-    id: int;
-    params: premises_params;
-}
-
 type premises_response = abstract
+
+type params = [
+      Init of init_params
+    | Start of start_params
+    | Run of run_params
+    | Goals of goals_params
+    | Premises of premises_params
+] <ocaml repr="classic">

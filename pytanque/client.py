@@ -3,30 +3,50 @@ import json
 import os
 import pathlib
 from collections import deque
-from typing import Type, Callable
+from typing import Union
 from .protocol import (
+    Request,
     Response,
     Failure,
-    InitRequest,
     InitParams,
     StartParams,
-    StartRequest,
     RunParams,
-    RunRequest,
-    RunResponse,
     GoalsParams,
-    GoalsRequest,
-    GoalsResponse,
     PremisesParams,
-    PremisesRequest,
+    RunResponse,
+    GoalsResponse,
     PremisesResponse,
     CurrentState,
     ProofFinished,
 )
 
+type Params = Union[
+    InitParams,
+    StartParams,
+    RunParams,
+    GoalsParams,
+    PremisesParams,
+]
+
 
 class PetanqueError(Exception):
     pass
+
+
+def mk_request(id, params: Params) -> Request:
+    match params:
+        case InitParams():
+            return Request(id, "petanque/init", params.to_json())
+        case StartParams():
+            return Request(id, "petanque/start", params.to_json())
+        case RunParams():
+            return Request(id, "petanque/run", params.to_json())
+        case GoalsParams():
+            return Request(id, "petanque/goals", params.to_json())
+        case PremisesParams():
+            return Request(id, "petanque/premises", params.to_json())
+        case _:
+            raise PetanqueError("Invalid request params")
 
 
 class Pytanque:
@@ -34,17 +54,19 @@ class Pytanque:
         self.socket.connect((self.host, self.port))
         return self
 
-    def __init__(self, host: str, port: int, id: int):
+    def __init__(self, host: str, port: int):
         self.host = host
         self.port = port
-        self.id = id
+        self.id = 0
         self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.queue = deque()
         self.env = 0
         self.file = ""
         self.thm = ""
 
-    def query(self, request, size: int = 1024):
+    def query(self, params: Params, size: int = 1024) -> Response:
+        self.id += 1
+        request = mk_request(self.id, params)
         payload = (json.dumps(request.to_json()) + "\n").encode()
         self.socket.sendall(payload)
         fragments = []
@@ -55,19 +77,21 @@ class Pytanque:
                 break
         raw = b"".join(fragments)
         try:
-            return Response.from_json_string(raw.decode())
+            resp = Response.from_json_string(raw.decode())
+            if resp.id != self.id:
+                raise PetanqueError(f"Sent request {self.id}, got response {resp.id}")
+            return resp
         except ValueError:
             failure = Failure.from_json_string(raw.decode())
             raise PetanqueError(failure.error)
 
-    def current_state(self):
+    def current_state(self) -> int:
         return self.queue[-1]
 
     def init(self, *, root: str):
         path = os.path.abspath(root)
         uri = pathlib.Path(path).as_uri()
-        req = InitRequest(self.id, InitParams(uri))
-        resp = self.query(req)
+        resp = self.query(InitParams(uri))
         self.env = resp.result
         print(f"Init success {self.env=}")
 
@@ -77,14 +101,12 @@ class Pytanque:
         self.queue.clear()
         path = os.path.abspath(file)
         uri = pathlib.Path(path).as_uri()
-        req = StartRequest(self.id, StartParams(self.env, uri, self.thm))
-        resp = self.query(req)
+        resp = self.query(StartParams(self.env, uri, self.thm))
         self.queue.append(resp.result)
         print(f"Start success. Current state:{self.current_state()}")
 
     def run_tac(self, tac: str):
-        req = RunRequest(self.id, RunParams(self.current_state(), tac))
-        resp = self.query(req)
+        resp = self.query(RunParams(self.current_state(), tac))
         res = RunResponse.from_json(resp.result)
         print(f"Run tac {tac}.")
         match res.value:
@@ -95,18 +117,16 @@ class Pytanque:
                 self.queue.append(res.value.value)
                 print(f"Proof finished:{self.current_state()}")
             case _:
-                raise PetanqueError("Humm!")
+                raise PetanqueError("Invalid proof state")
 
     def goals(self):
-        req = GoalsRequest(self.id, GoalsParams(self.current_state()))
-        resp = self.query(req)
+        resp = self.query(GoalsParams(self.current_state()))
         res = GoalsResponse.from_json(resp.result)
         print(f"Goals: {res.goals}")
         return res.goals
 
     def premises(self):
-        req = PremisesRequest(self.id, PremisesParams(self.current_state()))
-        resp = self.query(req)
+        resp = self.query(PremisesParams(self.current_state()))
         res = PremisesResponse.from_json(resp.result)
         print(f"Retrieved {len(res.value)} premises")
         return res.value

@@ -295,40 +295,6 @@ class StartParams:
 
 
 @dataclass
-class StartRequest:
-    """Original type: start_request = { ... }"""
-
-    id: int
-    params: StartParams
-    method: str = field(default_factory=lambda: 'petanque/start')
-
-    @classmethod
-    def from_json(cls, x: Any) -> 'StartRequest':
-        if isinstance(x, dict):
-            return cls(
-                id=_atd_read_int(x['id']) if 'id' in x else _atd_missing_json_field('StartRequest', 'id'),
-                params=StartParams.from_json(x['params']) if 'params' in x else _atd_missing_json_field('StartRequest', 'params'),
-                method=_atd_read_string(x['method']) if 'method' in x else 'petanque/start',
-            )
-        else:
-            _atd_bad_json('StartRequest', x)
-
-    def to_json(self) -> Any:
-        res: Dict[str, Any] = {}
-        res['id'] = _atd_write_int(self.id)
-        res['params'] = (lambda x: x.to_json())(self.params)
-        res['method'] = _atd_write_string(self.method)
-        return res
-
-    @classmethod
-    def from_json_string(cls, x: str) -> 'StartRequest':
-        return cls.from_json(json.loads(x))
-
-    def to_json_string(self, **kw: Any) -> str:
-        return json.dumps(self.to_json(), **kw)
-
-
-@dataclass
 class CurrentState:
     """Original type: run_response = [ ... | Current_state of ... | ... ]"""
 
@@ -429,45 +395,12 @@ class RunParams:
 
 
 @dataclass
-class RunRequest:
-    """Original type: run_request = { ... }"""
-
-    id: int
-    params: RunParams
-    method: str = field(default_factory=lambda: 'petanque/run')
-
-    @classmethod
-    def from_json(cls, x: Any) -> 'RunRequest':
-        if isinstance(x, dict):
-            return cls(
-                id=_atd_read_int(x['id']) if 'id' in x else _atd_missing_json_field('RunRequest', 'id'),
-                params=RunParams.from_json(x['params']) if 'params' in x else _atd_missing_json_field('RunRequest', 'params'),
-                method=_atd_read_string(x['method']) if 'method' in x else 'petanque/run',
-            )
-        else:
-            _atd_bad_json('RunRequest', x)
-
-    def to_json(self) -> Any:
-        res: Dict[str, Any] = {}
-        res['id'] = _atd_write_int(self.id)
-        res['params'] = (lambda x: x.to_json())(self.params)
-        res['method'] = _atd_write_string(self.method)
-        return res
-
-    @classmethod
-    def from_json_string(cls, x: str) -> 'RunRequest':
-        return cls.from_json(json.loads(x))
-
-    def to_json_string(self, **kw: Any) -> str:
-        return json.dumps(self.to_json(), **kw)
-
-
-@dataclass
 class Response:
     """Original type: response = { ... }"""
 
     id: int
     result: Any
+    jsonrpc: str = field(default_factory=lambda: '2.0')
 
     @classmethod
     def from_json(cls, x: Any) -> 'Response':
@@ -475,6 +408,7 @@ class Response:
             return cls(
                 id=_atd_read_int(x['id']) if 'id' in x else _atd_missing_json_field('Response', 'id'),
                 result=(lambda x: x)(x['result']) if 'result' in x else _atd_missing_json_field('Response', 'result'),
+                jsonrpc=_atd_read_string(x['jsonrpc']) if 'jsonrpc' in x else '2.0',
             )
         else:
             _atd_bad_json('Response', x)
@@ -483,10 +417,48 @@ class Response:
         res: Dict[str, Any] = {}
         res['id'] = _atd_write_int(self.id)
         res['result'] = (lambda x: x)(self.result)
+        res['jsonrpc'] = _atd_write_string(self.jsonrpc)
         return res
 
     @classmethod
     def from_json_string(cls, x: str) -> 'Response':
+        return cls.from_json(json.loads(x))
+
+    def to_json_string(self, **kw: Any) -> str:
+        return json.dumps(self.to_json(), **kw)
+
+
+@dataclass
+class Request:
+    """Original type: request = { ... }"""
+
+    id: int
+    method_: str
+    params: Any
+    jsonrpc: str = field(default_factory=lambda: '2.0')
+
+    @classmethod
+    def from_json(cls, x: Any) -> 'Request':
+        if isinstance(x, dict):
+            return cls(
+                id=_atd_read_int(x['id']) if 'id' in x else _atd_missing_json_field('Request', 'id'),
+                method_=_atd_read_string(x['method']) if 'method' in x else _atd_missing_json_field('Request', 'method'),
+                params=(lambda x: x)(x['params']) if 'params' in x else _atd_missing_json_field('Request', 'params'),
+                jsonrpc=_atd_read_string(x['jsonrpc']) if 'jsonrpc' in x else '2.0',
+            )
+        else:
+            _atd_bad_json('Request', x)
+
+    def to_json(self) -> Any:
+        res: Dict[str, Any] = {}
+        res['id'] = _atd_write_int(self.id)
+        res['method'] = _atd_write_string(self.method_)
+        res['params'] = (lambda x: x)(self.params)
+        res['jsonrpc'] = _atd_write_string(self.jsonrpc)
+        return res
+
+    @classmethod
+    def from_json_string(cls, x: str) -> 'Request':
         return cls.from_json(json.loads(x))
 
     def to_json_string(self, **kw: Any) -> str:
@@ -543,71 +515,6 @@ class PremisesParams:
 
 
 @dataclass
-class PremisesRequest:
-    """Original type: premises_request = { ... }"""
-
-    id: int
-    params: PremisesParams
-    method: str = field(default_factory=lambda: 'petanque/premises')
-
-    @classmethod
-    def from_json(cls, x: Any) -> 'PremisesRequest':
-        if isinstance(x, dict):
-            return cls(
-                id=_atd_read_int(x['id']) if 'id' in x else _atd_missing_json_field('PremisesRequest', 'id'),
-                params=PremisesParams.from_json(x['params']) if 'params' in x else _atd_missing_json_field('PremisesRequest', 'params'),
-                method=_atd_read_string(x['method']) if 'method' in x else 'petanque/premises',
-            )
-        else:
-            _atd_bad_json('PremisesRequest', x)
-
-    def to_json(self) -> Any:
-        res: Dict[str, Any] = {}
-        res['id'] = _atd_write_int(self.id)
-        res['params'] = (lambda x: x.to_json())(self.params)
-        res['method'] = _atd_write_string(self.method)
-        return res
-
-    @classmethod
-    def from_json_string(cls, x: str) -> 'PremisesRequest':
-        return cls.from_json(json.loads(x))
-
-    def to_json_string(self, **kw: Any) -> str:
-        return json.dumps(self.to_json(), **kw)
-
-
-@dataclass
-class InitResponse:
-    """Original type: init_response = { ... }"""
-
-    id: int
-    result: int
-
-    @classmethod
-    def from_json(cls, x: Any) -> 'InitResponse':
-        if isinstance(x, dict):
-            return cls(
-                id=_atd_read_int(x['id']) if 'id' in x else _atd_missing_json_field('InitResponse', 'id'),
-                result=_atd_read_int(x['result']) if 'result' in x else _atd_missing_json_field('InitResponse', 'result'),
-            )
-        else:
-            _atd_bad_json('InitResponse', x)
-
-    def to_json(self) -> Any:
-        res: Dict[str, Any] = {}
-        res['id'] = _atd_write_int(self.id)
-        res['result'] = _atd_write_int(self.result)
-        return res
-
-    @classmethod
-    def from_json_string(cls, x: str) -> 'InitResponse':
-        return cls.from_json(json.loads(x))
-
-    def to_json_string(self, **kw: Any) -> str:
-        return json.dumps(self.to_json(), **kw)
-
-
-@dataclass
 class InitParams:
     """Original type: init_params = { ... }"""
 
@@ -632,68 +539,6 @@ class InitParams:
 
     @classmethod
     def from_json_string(cls, x: str) -> 'InitParams':
-        return cls.from_json(json.loads(x))
-
-    def to_json_string(self, **kw: Any) -> str:
-        return json.dumps(self.to_json(), **kw)
-
-
-@dataclass
-class InitRequest:
-    """Original type: init_request = { ... }"""
-
-    id: int
-    params: InitParams
-    method: str = field(default_factory=lambda: 'petanque/init')
-
-    @classmethod
-    def from_json(cls, x: Any) -> 'InitRequest':
-        if isinstance(x, dict):
-            return cls(
-                id=_atd_read_int(x['id']) if 'id' in x else _atd_missing_json_field('InitRequest', 'id'),
-                params=InitParams.from_json(x['params']) if 'params' in x else _atd_missing_json_field('InitRequest', 'params'),
-                method=_atd_read_string(x['method']) if 'method' in x else 'petanque/init',
-            )
-        else:
-            _atd_bad_json('InitRequest', x)
-
-    def to_json(self) -> Any:
-        res: Dict[str, Any] = {}
-        res['id'] = _atd_write_int(self.id)
-        res['params'] = (lambda x: x.to_json())(self.params)
-        res['method'] = _atd_write_string(self.method)
-        return res
-
-    @classmethod
-    def from_json_string(cls, x: str) -> 'InitRequest':
-        return cls.from_json(json.loads(x))
-
-    def to_json_string(self, **kw: Any) -> str:
-        return json.dumps(self.to_json(), **kw)
-
-
-@dataclass
-class GoalsResponse:
-    """Original type: goals_response = { ... }"""
-
-    goals: List[Any]
-
-    @classmethod
-    def from_json(cls, x: Any) -> 'GoalsResponse':
-        if isinstance(x, dict):
-            return cls(
-                goals=_atd_read_list((lambda x: x))(x['goals']) if 'goals' in x else _atd_missing_json_field('GoalsResponse', 'goals'),
-            )
-        else:
-            _atd_bad_json('GoalsResponse', x)
-
-    def to_json(self) -> Any:
-        res: Dict[str, Any] = {}
-        res['goals'] = _atd_write_list((lambda x: x))(self.goals)
-        return res
-
-    @classmethod
-    def from_json_string(cls, x: str) -> 'GoalsResponse':
         return cls.from_json(json.loads(x))
 
     def to_json_string(self, **kw: Any) -> str:
@@ -729,33 +574,156 @@ class GoalsParams:
 
 
 @dataclass
-class GoalsRequest:
-    """Original type: goals_request = { ... }"""
+class Init:
+    """Original type: params = [ ... | Init of ... | ... ]"""
 
-    id: int
-    params: GoalsParams
-    method: str = field(default_factory=lambda: 'petanque/goals')
+    value: InitParams
+
+    @property
+    def kind(self) -> str:
+        """Name of the class representing this variant."""
+        return 'Init'
+
+    def to_json(self) -> Any:
+        return ['Init', (lambda x: x.to_json())(self.value)]
+
+    def to_json_string(self, **kw: Any) -> str:
+        return json.dumps(self.to_json(), **kw)
+
+
+@dataclass
+class Start:
+    """Original type: params = [ ... | Start of ... | ... ]"""
+
+    value: StartParams
+
+    @property
+    def kind(self) -> str:
+        """Name of the class representing this variant."""
+        return 'Start'
+
+    def to_json(self) -> Any:
+        return ['Start', (lambda x: x.to_json())(self.value)]
+
+    def to_json_string(self, **kw: Any) -> str:
+        return json.dumps(self.to_json(), **kw)
+
+
+@dataclass
+class Run:
+    """Original type: params = [ ... | Run of ... | ... ]"""
+
+    value: RunParams
+
+    @property
+    def kind(self) -> str:
+        """Name of the class representing this variant."""
+        return 'Run'
+
+    def to_json(self) -> Any:
+        return ['Run', (lambda x: x.to_json())(self.value)]
+
+    def to_json_string(self, **kw: Any) -> str:
+        return json.dumps(self.to_json(), **kw)
+
+
+@dataclass
+class Goals:
+    """Original type: params = [ ... | Goals of ... | ... ]"""
+
+    value: GoalsParams
+
+    @property
+    def kind(self) -> str:
+        """Name of the class representing this variant."""
+        return 'Goals'
+
+    def to_json(self) -> Any:
+        return ['Goals', (lambda x: x.to_json())(self.value)]
+
+    def to_json_string(self, **kw: Any) -> str:
+        return json.dumps(self.to_json(), **kw)
+
+
+@dataclass
+class Premises:
+    """Original type: params = [ ... | Premises of ... | ... ]"""
+
+    value: PremisesParams
+
+    @property
+    def kind(self) -> str:
+        """Name of the class representing this variant."""
+        return 'Premises'
+
+    def to_json(self) -> Any:
+        return ['Premises', (lambda x: x.to_json())(self.value)]
+
+    def to_json_string(self, **kw: Any) -> str:
+        return json.dumps(self.to_json(), **kw)
+
+
+@dataclass
+class Params:
+    """Original type: params = [ ... ]"""
+
+    value: Union[Init, Start, Run, Goals, Premises]
+
+    @property
+    def kind(self) -> str:
+        """Name of the class representing this variant."""
+        return self.value.kind
 
     @classmethod
-    def from_json(cls, x: Any) -> 'GoalsRequest':
+    def from_json(cls, x: Any) -> 'Params':
+        if isinstance(x, List) and len(x) == 2:
+            cons = x[0]
+            if cons == 'Init':
+                return cls(Init(InitParams.from_json(x[1])))
+            if cons == 'Start':
+                return cls(Start(StartParams.from_json(x[1])))
+            if cons == 'Run':
+                return cls(Run(RunParams.from_json(x[1])))
+            if cons == 'Goals':
+                return cls(Goals(GoalsParams.from_json(x[1])))
+            if cons == 'Premises':
+                return cls(Premises(PremisesParams.from_json(x[1])))
+            _atd_bad_json('Params', x)
+        _atd_bad_json('Params', x)
+
+    def to_json(self) -> Any:
+        return self.value.to_json()
+
+    @classmethod
+    def from_json_string(cls, x: str) -> 'Params':
+        return cls.from_json(json.loads(x))
+
+    def to_json_string(self, **kw: Any) -> str:
+        return json.dumps(self.to_json(), **kw)
+
+
+@dataclass
+class GoalsResponse:
+    """Original type: goals_response = { ... }"""
+
+    goals: List[Any]
+
+    @classmethod
+    def from_json(cls, x: Any) -> 'GoalsResponse':
         if isinstance(x, dict):
             return cls(
-                id=_atd_read_int(x['id']) if 'id' in x else _atd_missing_json_field('GoalsRequest', 'id'),
-                params=GoalsParams.from_json(x['params']) if 'params' in x else _atd_missing_json_field('GoalsRequest', 'params'),
-                method=_atd_read_string(x['method']) if 'method' in x else 'petanque/goals',
+                goals=_atd_read_list((lambda x: x))(x['goals']) if 'goals' in x else _atd_missing_json_field('GoalsResponse', 'goals'),
             )
         else:
-            _atd_bad_json('GoalsRequest', x)
+            _atd_bad_json('GoalsResponse', x)
 
     def to_json(self) -> Any:
         res: Dict[str, Any] = {}
-        res['id'] = _atd_write_int(self.id)
-        res['params'] = (lambda x: x.to_json())(self.params)
-        res['method'] = _atd_write_string(self.method)
+        res['goals'] = _atd_write_list((lambda x: x))(self.goals)
         return res
 
     @classmethod
-    def from_json_string(cls, x: str) -> 'GoalsRequest':
+    def from_json_string(cls, x: str) -> 'GoalsResponse':
         return cls.from_json(json.loads(x))
 
     def to_json_string(self, **kw: Any) -> str:
