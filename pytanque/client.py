@@ -151,6 +151,7 @@ class Pytanque:
                 print(f"Proof finished:{self.current_state()}")
             case _:
                 raise PetanqueError("Invalid proof state")
+        return res.value
 
     def goals(self) -> List[Any]:
         """
