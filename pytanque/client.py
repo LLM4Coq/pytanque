@@ -144,10 +144,10 @@ class Pytanque:
         print(f"Run tac {tac}.")
         match res.value:
             case CurrentState(st):
-                self.queue.append(State(res.value.value, tac))
+                self.queue.append(State(st, tac))
                 print(f"Current state:{self.current_state()}")
             case ProofFinished(st):
-                self.queue.append(State(res.value.value, tac))
+                self.queue.append(State(st, tac))
                 print(f"Proof finished:{self.current_state()}")
             case _:
                 raise PetanqueError("Invalid proof state")
