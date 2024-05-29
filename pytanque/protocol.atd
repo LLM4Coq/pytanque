@@ -52,11 +52,3 @@ type premises_params = {
 }
 
 type premises_response = abstract
-
-type params = [
-      Init of init_params
-    | Start of start_params
-    | Run of run_params
-    | Goals of goals_params
-    | Premises of premises_params
-] <ocaml repr="classic">

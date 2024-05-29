@@ -5,7 +5,7 @@ with Pytanque("127.0.0.1", 8765) as pet:
     pet.start(file="./examples/foo.v", thm="addnC")
     pet.run_tac("induction n.")
     pet.goals()
-    # pet.premises()
+    pet.premises()
     pet.run_tac("simpl.")
     print(f"backtrack {pet.backtrack()}")
     print(f"backtrack {pet.backtrack()}")

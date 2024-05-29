@@ -21,7 +21,7 @@ from .protocol import (
     ProofFinished,
 )
 
-type Params = Union[
+Params = Union[
     InitParams,
     StartParams,
     RunParams,
@@ -168,6 +168,7 @@ class Pytanque:
         resp = self.query(PremisesParams(self.current_state()))
         res = PremisesResponse.from_json(resp.result)
         print(f"Retrieved {len(res.value)} premises")
+        print(f"Sample premises: {res.value[:10]}")
         return res.value
 
     def backtrack(self) -> Tuple[int, str]:
