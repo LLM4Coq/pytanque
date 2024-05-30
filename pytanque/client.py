@@ -182,7 +182,7 @@ class Pytanque:
     def reset(self):
         self.start(file=self.file, thm=self.thm)
 
-    def __exit__(self, exc_type, exc_value, exc_tb):
+    def __exit__(self, exc_type, exc_val, exc_tb):
         """
         Close the socket.
         """
