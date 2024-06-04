@@ -3,7 +3,9 @@ import json
 import os
 import pathlib
 from collections import deque
-from typing import Union, List, Tuple, Any
+from typing import Union, List, Tuple, Any, Deque, Optional, Type
+from typing_extensions import Self
+from types import TracebackType
 from dataclasses import dataclass
 from .protocol import (
     Request,
@@ -34,7 +36,7 @@ class PetanqueError(Exception):
     pass
 
 
-def mk_request(id, params: Params) -> Request:
+def mk_request(id: int, params: Params) -> Request:
     match params:
         case InitParams():
             return Request(id, "petanque/init", params.to_json())
@@ -65,7 +67,7 @@ class Pytanque:
     Petanque client to communicate with the Rocq theorem prover using JSON-RPC over a simple socket.
     """
 
-    def __enter__(self):
+    def __enter__(self) -> Self:
         self.socket.connect((self.host, self.port))
         return self
 
@@ -77,7 +79,7 @@ class Pytanque:
         self.port = port
         self.id = 0
         self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.queue = deque()
+        self.queue: Deque[State] = deque()
         self.env = 0
         self.file = ""
         self.thm = ""
@@ -112,7 +114,7 @@ class Pytanque:
         """
         return self.queue[-1].id
 
-    def init(self, *, root: str):
+    def init(self, *, root: str) -> None:
         """
         Initialize Rocq enviorment (must only be called once).
         """
@@ -122,7 +124,7 @@ class Pytanque:
         self.env = resp.result
         print(f"Init success {self.env=}")
 
-    def start(self, *, file: str, thm: str):
+    def start(self, *, file: str, thm: str) -> None:
         """
         Start the proof of [thm] defined in [file].
         """
@@ -135,7 +137,7 @@ class Pytanque:
         self.queue.append(State(resp.result, "Start"))
         print(f"Start success. Current state:{self.current_state()}")
 
-    def run_tac(self, tac: str):
+    def run_tac(self, tac: str) -> Union[CurrentState, ProofFinished]:
         """
         Execute on tactic.
         """
@@ -162,7 +164,7 @@ class Pytanque:
         print(f"Goals: {res.goals}")
         return res.goals
 
-    def premises(self) -> List[Any]:
+    def premises(self) -> Any:
         """
         Return the list of accessible premises.
         """
@@ -179,10 +181,12 @@ class Pytanque:
         st = self.queue.pop()
         return (st.id, st.action)
 
-    def reset(self):
+    def reset(self) -> None:
         self.start(file=self.file, thm=self.thm)
 
-    def __exit__(self, exc_type, exc_val, exc_tb):
+    def __exit__(self, exc_type: Optional[Type[BaseException]],
+                 exc_val: Optional[BaseException],
+                 exc_tb: Optional[TracebackType]) -> None:
         """
         Close the socket.
         """
