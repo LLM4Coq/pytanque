@@ -67,10 +67,6 @@ class Pytanque:
     Petanque client to communicate with the Rocq theorem prover using JSON-RPC over a simple socket.
     """
 
-    def __enter__(self) -> Self:
-        self.socket.connect((self.host, self.port))
-        return self
-
     def __init__(self, host: str, port: int):
         """
         Open socket given the [host] and [port].
@@ -83,6 +79,22 @@ class Pytanque:
         self.env = 0
         self.file = ""
         self.thm = ""
+
+    def connect(self) -> None:
+        """
+        Connect the socket to the server
+        """
+        self.socket.connect((self.host, self.port))
+
+    def close(self) -> None:
+        """
+        Close the socket
+        """
+        self.socket.close()
+
+    def __enter__(self) -> Self:
+        self.connect()
+        return self
 
     def query(self, params: Params, size: int = 1024) -> Response:
         """
@@ -190,4 +202,4 @@ class Pytanque:
         """
         Close the socket.
         """
-        self.socket.close()
+        self.close()
