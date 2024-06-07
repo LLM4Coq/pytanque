@@ -14,3 +14,22 @@ from .protocol import (
     CurrentState,
     ProofFinished,
 )
+
+__all__ = [
+    "Pytanque",
+    "PetanqueError",
+    "State",
+    "Request",
+    "Response",
+    "Failure",
+    "InitParams",
+    "StartParams",
+    "RunParams",
+    "GoalsParams",
+    "PremisesParams",
+    "RunResponse",
+    "GoalsResponse",
+    "PremisesResponse",
+    "CurrentState",
+    "ProofFinished",
+]
