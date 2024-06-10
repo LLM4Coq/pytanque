@@ -2,6 +2,7 @@ import socket
 import json
 import os
 import pathlib
+import logging
 from collections import deque
 from typing import Union, List, Tuple, Any, Deque, Optional, Type
 from typing_extensions import Self
@@ -31,6 +32,7 @@ Params = Union[
     PremisesParams,
 ]
 
+logger = logging.getLogger(__name__)
 
 class PetanqueError(Exception):
     pass
@@ -85,12 +87,14 @@ class Pytanque:
         Connect the socket to the server
         """
         self.socket.connect((self.host, self.port))
+        logger.info(f"Connected to the socket")
 
     def close(self) -> None:
         """
         Close the socket
         """
         self.socket.close()
+        logger.info(f"Socket closed")
 
     def __enter__(self) -> Self:
         self.connect()
@@ -134,7 +138,7 @@ class Pytanque:
         uri = pathlib.Path(path).as_uri()
         resp = self.query(InitParams(uri))
         self.env = resp.result
-        print(f"Init success {self.env=}")
+        logger.info(f"Init success {self.env=}")
 
     def start(self, *, file: str, thm: str) -> None:
         """
@@ -147,7 +151,7 @@ class Pytanque:
         uri = pathlib.Path(path).as_uri()
         resp = self.query(StartParams(self.env, uri, self.thm))
         self.queue.append(State(resp.result, "Start"))
-        print(f"Start success. Current state:{self.current_state()}")
+        logger.info(f"Start success. Current state:{self.current_state()}")
 
     def run_tac(self, tac: str) -> Union[CurrentState, ProofFinished]:
         """
@@ -155,14 +159,12 @@ class Pytanque:
         """
         resp = self.query(RunParams(self.current_state(), tac))
         res = RunResponse.from_json(resp.result)
-        print(f"Run tac {tac}.")
+        logger.info(f"Run tac {tac}.")
         match res.value:
             case CurrentState(st):
                 self.queue.append(State(st, tac))
-                print(f"Current state:{self.current_state()}")
             case ProofFinished(st):
                 self.queue.append(State(st, tac))
-                print(f"Proof finished:{self.current_state()}")
             case _:
                 raise PetanqueError("Invalid proof state")
         return res.value
@@ -173,7 +175,7 @@ class Pytanque:
         """
         resp = self.query(GoalsParams(self.current_state()))
         res = GoalsResponse.from_json(resp.result)
-        print(f"Goals: {res.goals}")
+        logger.info(f"Current goals: {res.goals}")
         return res.goals
 
     def premises(self) -> Any:
@@ -182,8 +184,7 @@ class Pytanque:
         """
         resp = self.query(PremisesParams(self.current_state()))
         res = PremisesResponse.from_json(resp.result)
-        print(f"Retrieved {len(res.value)} premises")
-        print(f"Sample premises: {res.value[:10]}")
+        logger.info(f"Retrieved {len(res.value)} premises")
         return res.value
 
     def backtrack(self) -> Tuple[int, str]:
@@ -191,15 +192,17 @@ class Pytanque:
         Rollback one step of the proof.
         """
         st = self.queue.pop()
+        logger.info(f"Undo {st.action}, back to state {st.id}")
         return (st.id, st.action)
 
     def reset(self) -> None:
+        logger.info(f"Reset")
         self.start(file=self.file, thm=self.thm)
 
     def __exit__(self, exc_type: Optional[Type[BaseException]],
                  exc_val: Optional[BaseException],
                  exc_tb: Optional[TracebackType]) -> None:
         """
-        Close the socket.
+        Close the socket and exit.
         """
         self.close()
