@@ -4,7 +4,14 @@ import os
 import pathlib
 import logging
 from collections import deque
-from typing import Union, List, Tuple, Any, Deque, Optional, Type
+from typing import (
+    Union,
+    Tuple,
+    Any,
+    Deque,
+    Optional,
+    Type,
+)
 from typing_extensions import Self
 from types import TracebackType
 from dataclasses import dataclass
@@ -33,6 +40,7 @@ Params = Union[
 ]
 
 logger = logging.getLogger(__name__)
+
 
 class PetanqueError(Exception):
     pass
@@ -169,14 +177,14 @@ class Pytanque:
                 raise PetanqueError("Invalid proof state")
         return res.value
 
-    def goals(self) -> List[Any]:
+    def goals(self) -> GoalsResponse:
         """
         Return the list of current goals.
         """
         resp = self.query(GoalsParams(self.current_state()))
         res = GoalsResponse.from_json(resp.result)
         logger.info(f"Current goals: {res.goals}")
-        return res.goals
+        return res
 
     def premises(self) -> Any:
         """
@@ -199,9 +207,12 @@ class Pytanque:
         logger.info(f"Reset")
         self.start(file=self.file, thm=self.thm)
 
-    def __exit__(self, exc_type: Optional[Type[BaseException]],
-                 exc_val: Optional[BaseException],
-                 exc_tb: Optional[TracebackType]) -> None:
+    def __exit__(
+        self,
+        exc_type: Optional[Type[BaseException]],
+        exc_val: Optional[BaseException],
+        exc_tb: Optional[TracebackType],
+    ) -> None:
         """
         Close the socket and exit.
         """

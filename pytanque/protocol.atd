@@ -1,3 +1,5 @@
+<python text="from .pretty_print import add_pp, pp_goal, pp_goals">
+
 type error = {
     code: int;
     message: string;
@@ -43,8 +45,20 @@ type goals_params = {
     st: int;
 }
 
-type goals_response = {
-    goals : abstract list;
+type goal_hyp = {
+    names: string list;
+    ?def_ <json name="def">: abstract option;
+    ty: string;
+}
+
+type goal <python decorator="add_pp(pp_goal)"> = {
+    info: abstract;
+    hyps: goal_hyp list;
+    ty: string;
+}
+
+type goals_response <python decorator="add_pp(pp_goals)"> = {
+    goals : goal list;
 }
 
 type premises_params = {

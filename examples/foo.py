@@ -15,4 +15,3 @@ with Pytanque("127.0.0.1", 8765) as pet:
     print(f"backtrack {pet.backtrack()}")
     g = pet.run_tac("by elim: n => //= ? ->.")
     print("Goals:", g)
-
