@@ -39,6 +39,9 @@ Params = Union[
     PremisesParams,
 ]
 
+Env = int
+State = Union[CurrentState, ProofFinished]
+
 logger = logging.getLogger(__name__)
 
 
@@ -62,16 +65,6 @@ def mk_request(id: int, params: Params) -> Request:
             raise PetanqueError("Invalid request params")
 
 
-@dataclass
-class State:
-    """
-    Prover state and action to be performed.
-    """
-
-    id: int
-    action: str
-
-
 class Pytanque:
     """
     Petanque client to communicate with the Rocq theorem prover using JSON-RPC over a simple socket.
@@ -85,7 +78,6 @@ class Pytanque:
         self.port = port
         self.id = 0
         self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.queue: Deque[State] = deque()
         self.env = 0
         self.file = ""
         self.thm = ""
@@ -132,13 +124,7 @@ class Pytanque:
             failure = Failure.from_json_string(raw.decode())
             raise PetanqueError(failure.error)
 
-    def current_state(self) -> int:
-        """
-        Return the current state of the prover.
-        """
-        return self.queue[-1].id
-
-    def init(self, *, root: str) -> None:
+    def init(self, *, root: str) -> Env:
         """
         Initialize Rocq enviorment (must only be called once).
         """
@@ -147,65 +133,46 @@ class Pytanque:
         resp = self.query(InitParams(uri))
         self.env = resp.result
         logger.info(f"Init success {self.env=}")
+        return int(resp.result)
 
-    def start(self, *, file: str, thm: str) -> None:
+    def start(self, *, file: str, thm: str) -> State:
         """
         Start the proof of [thm] defined in [file].
         """
         self.file = file
         self.thm = thm
-        self.queue.clear()
         path = os.path.abspath(file)
         uri = pathlib.Path(path).as_uri()
         resp = self.query(StartParams(self.env, uri, self.thm))
-        self.queue.append(State(resp.result, "Start"))
-        logger.info(f"Start success. Current state:{self.current_state()}")
+        logger.info(f"Start success.")
+        return CurrentState(resp.result)
 
-    def run_tac(self, tac: str) -> Union[CurrentState, ProofFinished]:
+    def run_tac(self, state: State, tac: str) -> State:
         """
         Execute on tactic.
         """
-        resp = self.query(RunParams(self.current_state(), tac))
+        resp = self.query(RunParams(state.value, tac))
         res = RunResponse.from_json(resp.result)
         logger.info(f"Run tac {tac}.")
-        match res.value:
-            case CurrentState(st):
-                self.queue.append(State(st, tac))
-            case ProofFinished(st):
-                self.queue.append(State(st, tac))
-            case _:
-                raise PetanqueError("Invalid proof state")
         return res.value
 
-    def goals(self) -> GoalsResponse:
+    def goals(self, state: State) -> GoalsResponse:
         """
         Return the list of current goals.
         """
-        resp = self.query(GoalsParams(self.current_state()))
+        resp = self.query(GoalsParams(state.value))
         res = GoalsResponse.from_json(resp.result)
         logger.info(f"Current goals: {res.goals}")
         return res
 
-    def premises(self) -> Any:
+    def premises(self, state: State) -> Any:
         """
         Return the list of accessible premises.
         """
-        resp = self.query(PremisesParams(self.current_state()))
+        resp = self.query(PremisesParams(state.value))
         res = PremisesResponse.from_json(resp.result)
         logger.info(f"Retrieved {len(res.value)} premises")
         return res.value
-
-    def backtrack(self) -> Tuple[int, str]:
-        """
-        Rollback one step of the proof.
-        """
-        st = self.queue.pop()
-        logger.info(f"Undo {st.action}, back to state {st.id}")
-        return (st.id, st.action)
-
-    def reset(self) -> None:
-        logger.info(f"Reset")
-        self.start(file=self.file, thm=self.thm)
 
     def __exit__(
         self,
