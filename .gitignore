@@ -1,4 +1,5 @@
 .python-version
 .vscode
+.envrc
 __pycache__
 _opam
