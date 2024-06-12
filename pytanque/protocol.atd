@@ -29,7 +29,6 @@ type init_params = {
 }
 
 type start_params = {
-    env: int;
     uri: string;
     thm: string;
 }

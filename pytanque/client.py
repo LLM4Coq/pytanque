@@ -78,7 +78,6 @@ class Pytanque:
         self.port = port
         self.id = 0
         self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.env = 0
         self.file = ""
         self.thm = ""
 
@@ -124,16 +123,11 @@ class Pytanque:
             failure = Failure.from_json_string(raw.decode())
             raise PetanqueError(failure.error)
 
-    def init(self, *, root: str) -> Env:
+    def set_workspace(self, *, root: str) -> None:
         """
         Initialize Rocq enviorment (must only be called once).
         """
-        path = os.path.abspath(root)
-        uri = pathlib.Path(path).as_uri()
-        resp = self.query(InitParams(uri))
-        self.env = resp.result
-        logger.info(f"Init success {self.env=}")
-        return int(resp.result)
+        pass
 
     def start(self, *, file: str, thm: str) -> State:
         """
@@ -143,7 +137,7 @@ class Pytanque:
         self.thm = thm
         path = os.path.abspath(file)
         uri = pathlib.Path(path).as_uri()
-        resp = self.query(StartParams(self.env, uri, self.thm))
+        resp = self.query(StartParams(uri, self.thm))
         logger.info(f"Start success.")
         return CurrentState(resp.result)
 

@@ -281,7 +281,6 @@ from .pretty_print import add_pp, pp_goal, pp_goals
 class StartParams:
     """Original type: start_params = { ... }"""
 
-    env: int
     uri: str
     thm: str
 
@@ -289,11 +288,6 @@ class StartParams:
     def from_json(cls, x: Any) -> "StartParams":
         if isinstance(x, dict):
             return cls(
-                env=(
-                    _atd_read_int(x["env"])
-                    if "env" in x
-                    else _atd_missing_json_field("StartParams", "env")
-                ),
                 uri=(
                     _atd_read_string(x["uri"])
                     if "uri" in x
@@ -310,7 +304,6 @@ class StartParams:
 
     def to_json(self) -> Any:
         res: Dict[str, Any] = {}
-        res["env"] = _atd_write_int(self.env)
         res["uri"] = _atd_write_string(self.uri)
         res["thm"] = _atd_write_string(self.thm)
         return res
