@@ -1,4 +1,4 @@
-from .client import Pytanque, PetanqueError
+from .client import Pytanque, State, PetanqueError
 from .protocol import (
     Request,
     Response,
