@@ -23,22 +23,27 @@ type request = {
     params: abstract
 }
 
-type init_params = {
-    ~debug <python default="False">: bool;
-    root: string;
-}
-
 type start_params = {
     uri: string;
     thm: string;
 }
 
+type run_ops = {
+    ~memo <python default="True">: bool;
+    ~hash <python default="True">: bool;
+}
+
 type run_params = {
+    ?opts: run_ops option;
     st: int;
     tac: string;
 }
 
-type run_response = [ Current_state of int | Proof_finished of int ]
+type state = {
+    st: int;
+    ?hash: int option;
+    proof_finished: bool;
+}
 
 type goals_params = {
     st: int;
@@ -65,3 +70,22 @@ type premises_params = {
 }
 
 type premises_response = abstract
+
+type inspect = [ 
+    InspectPhysical <json name="Physical"> | 
+    InspectGoals <json name="Goals"> 
+] 
+
+type state_equal_params = {
+    kind: inspect;
+    st1: int;
+    st2: int;
+}
+
+type state_equal_response = bool
+
+type state_hash_params = {
+    st: int;
+}
+
+type state_hash_response = int
