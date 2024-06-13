@@ -278,10 +278,238 @@ from .pretty_print import add_pp, pp_goal, pp_goals
 
 
 @dataclass
+class StateHashResponse:
+    """Original type: state_hash_response"""
+
+    value: int
+
+    @classmethod
+    def from_json(cls, x: Any) -> "StateHashResponse":
+        return cls(_atd_read_int(x))
+
+    def to_json(self) -> Any:
+        return _atd_write_int(self.value)
+
+    @classmethod
+    def from_json_string(cls, x: str) -> "StateHashResponse":
+        return cls.from_json(json.loads(x))
+
+    def to_json_string(self, **kw: Any) -> str:
+        return json.dumps(self.to_json(), **kw)
+
+
+@dataclass
+class StateHashParams:
+    """Original type: state_hash_params = { ... }"""
+
+    st: int
+
+    @classmethod
+    def from_json(cls, x: Any) -> "StateHashParams":
+        if isinstance(x, dict):
+            return cls(
+                st=(
+                    _atd_read_int(x["st"])
+                    if "st" in x
+                    else _atd_missing_json_field("StateHashParams", "st")
+                ),
+            )
+        else:
+            _atd_bad_json("StateHashParams", x)
+
+    def to_json(self) -> Any:
+        res: Dict[str, Any] = {}
+        res["st"] = _atd_write_int(self.st)
+        return res
+
+    @classmethod
+    def from_json_string(cls, x: str) -> "StateHashParams":
+        return cls.from_json(json.loads(x))
+
+    def to_json_string(self, **kw: Any) -> str:
+        return json.dumps(self.to_json(), **kw)
+
+
+@dataclass
+class StateEqualResponse:
+    """Original type: state_equal_response"""
+
+    value: bool
+
+    @classmethod
+    def from_json(cls, x: Any) -> "StateEqualResponse":
+        return cls(_atd_read_bool(x))
+
+    def to_json(self) -> Any:
+        return _atd_write_bool(self.value)
+
+    @classmethod
+    def from_json_string(cls, x: str) -> "StateEqualResponse":
+        return cls.from_json(json.loads(x))
+
+    def to_json_string(self, **kw: Any) -> str:
+        return json.dumps(self.to_json(), **kw)
+
+
+@dataclass
+class InspectPhysical:
+    """Original type: inspect = [ ... | InspectPhysical | ... ]"""
+
+    @property
+    def kind(self) -> str:
+        """Name of the class representing this variant."""
+        return "InspectPhysical"
+
+    @staticmethod
+    def to_json() -> Any:
+        return "Physical"
+
+    def to_json_string(self, **kw: Any) -> str:
+        return json.dumps(self.to_json(), **kw)
+
+
+@dataclass
+class InspectGoals:
+    """Original type: inspect = [ ... | InspectGoals | ... ]"""
+
+    @property
+    def kind(self) -> str:
+        """Name of the class representing this variant."""
+        return "InspectGoals"
+
+    @staticmethod
+    def to_json() -> Any:
+        return "Goals"
+
+    def to_json_string(self, **kw: Any) -> str:
+        return json.dumps(self.to_json(), **kw)
+
+
+@dataclass
+class Inspect:
+    """Original type: inspect = [ ... ]"""
+
+    value: Union[InspectPhysical, InspectGoals]
+
+    @property
+    def kind(self) -> str:
+        """Name of the class representing this variant."""
+        return self.value.kind
+
+    @classmethod
+    def from_json(cls, x: Any) -> "Inspect":
+        if isinstance(x, str):
+            if x == "Physical":
+                return cls(InspectPhysical())
+            if x == "Goals":
+                return cls(InspectGoals())
+            _atd_bad_json("Inspect", x)
+        _atd_bad_json("Inspect", x)
+
+    def to_json(self) -> Any:
+        return self.value.to_json()
+
+    @classmethod
+    def from_json_string(cls, x: str) -> "Inspect":
+        return cls.from_json(json.loads(x))
+
+    def to_json_string(self, **kw: Any) -> str:
+        return json.dumps(self.to_json(), **kw)
+
+
+@dataclass
+class StateEqualParams:
+    """Original type: state_equal_params = { ... }"""
+
+    kind: Inspect
+    st1: int
+    st2: int
+
+    @classmethod
+    def from_json(cls, x: Any) -> "StateEqualParams":
+        if isinstance(x, dict):
+            return cls(
+                kind=(
+                    Inspect.from_json(x["kind"])
+                    if "kind" in x
+                    else _atd_missing_json_field("StateEqualParams", "kind")
+                ),
+                st1=(
+                    _atd_read_int(x["st1"])
+                    if "st1" in x
+                    else _atd_missing_json_field("StateEqualParams", "st1")
+                ),
+                st2=(
+                    _atd_read_int(x["st2"])
+                    if "st2" in x
+                    else _atd_missing_json_field("StateEqualParams", "st2")
+                ),
+            )
+        else:
+            _atd_bad_json("StateEqualParams", x)
+
+    def to_json(self) -> Any:
+        res: Dict[str, Any] = {}
+        res["kind"] = (lambda x: x.to_json())(self.kind)
+        res["st1"] = _atd_write_int(self.st1)
+        res["st2"] = _atd_write_int(self.st2)
+        return res
+
+    @classmethod
+    def from_json_string(cls, x: str) -> "StateEqualParams":
+        return cls.from_json(json.loads(x))
+
+    def to_json_string(self, **kw: Any) -> str:
+        return json.dumps(self.to_json(), **kw)
+
+
+@dataclass
+class State:
+    """Original type: state = { ... }"""
+
+    st: int
+    proof_finished: bool
+    hash: Optional[int] = None
+
+    @classmethod
+    def from_json(cls, x: Any) -> "State":
+        if isinstance(x, dict):
+            return cls(
+                st=(
+                    _atd_read_int(x["st"])
+                    if "st" in x
+                    else _atd_missing_json_field("State", "st")
+                ),
+                proof_finished=(
+                    _atd_read_bool(x["proof_finished"])
+                    if "proof_finished" in x
+                    else _atd_missing_json_field("State", "proof_finished")
+                ),
+                hash=_atd_read_int(x["hash"]) if "hash" in x else None,
+            )
+        else:
+            _atd_bad_json("State", x)
+
+    def to_json(self) -> Any:
+        res: Dict[str, Any] = {}
+        res["st"] = _atd_write_int(self.st)
+        res["proof_finished"] = _atd_write_bool(self.proof_finished)
+        if self.hash is not None:
+            res["hash"] = _atd_write_int(self.hash)
+        return res
+
+    @classmethod
+    def from_json_string(cls, x: str) -> "State":
+        return cls.from_json(json.loads(x))
+
+    def to_json_string(self, **kw: Any) -> str:
+        return json.dumps(self.to_json(), **kw)
+
+
+@dataclass
 class StartParams:
     """Original type: start_params = { ... }"""
 
-    env: int
     uri: str
     thm: str
 
@@ -289,11 +517,6 @@ class StartParams:
     def from_json(cls, x: Any) -> "StartParams":
         if isinstance(x, dict):
             return cls(
-                env=(
-                    _atd_read_int(x["env"])
-                    if "env" in x
-                    else _atd_missing_json_field("StartParams", "env")
-                ),
                 uri=(
                     _atd_read_string(x["uri"])
                     if "uri" in x
@@ -310,7 +533,6 @@ class StartParams:
 
     def to_json(self) -> Any:
         res: Dict[str, Any] = {}
-        res["env"] = _atd_write_int(self.env)
         res["uri"] = _atd_write_string(self.uri)
         res["thm"] = _atd_write_string(self.thm)
         return res
@@ -324,68 +546,30 @@ class StartParams:
 
 
 @dataclass
-class CurrentState:
-    """Original type: run_response = [ ... | Current_state of ... | ... ]"""
+class RunOps:
+    """Original type: run_ops = { ... }"""
 
-    value: int
-
-    @property
-    def kind(self) -> str:
-        """Name of the class representing this variant."""
-        return "CurrentState"
-
-    def to_json(self) -> Any:
-        return ["Current_state", _atd_write_int(self.value)]
-
-    def to_json_string(self, **kw: Any) -> str:
-        return json.dumps(self.to_json(), **kw)
-
-
-@dataclass
-class ProofFinished:
-    """Original type: run_response = [ ... | Proof_finished of ... | ... ]"""
-
-    value: int
-
-    @property
-    def kind(self) -> str:
-        """Name of the class representing this variant."""
-        return "ProofFinished"
-
-    def to_json(self) -> Any:
-        return ["Proof_finished", _atd_write_int(self.value)]
-
-    def to_json_string(self, **kw: Any) -> str:
-        return json.dumps(self.to_json(), **kw)
-
-
-@dataclass
-class RunResponse:
-    """Original type: run_response = [ ... ]"""
-
-    value: Union[CurrentState, ProofFinished]
-
-    @property
-    def kind(self) -> str:
-        """Name of the class representing this variant."""
-        return self.value.kind
+    memo: bool = field(default_factory=lambda: True)
+    hash: bool = field(default_factory=lambda: True)
 
     @classmethod
-    def from_json(cls, x: Any) -> "RunResponse":
-        if isinstance(x, List) and len(x) == 2:
-            cons = x[0]
-            if cons == "Current_state":
-                return cls(CurrentState(_atd_read_int(x[1])))
-            if cons == "Proof_finished":
-                return cls(ProofFinished(_atd_read_int(x[1])))
-            _atd_bad_json("RunResponse", x)
-        _atd_bad_json("RunResponse", x)
+    def from_json(cls, x: Any) -> "RunOps":
+        if isinstance(x, dict):
+            return cls(
+                memo=_atd_read_bool(x["memo"]) if "memo" in x else True,
+                hash=_atd_read_bool(x["hash"]) if "hash" in x else True,
+            )
+        else:
+            _atd_bad_json("RunOps", x)
 
     def to_json(self) -> Any:
-        return self.value.to_json()
+        res: Dict[str, Any] = {}
+        res["memo"] = _atd_write_bool(self.memo)
+        res["hash"] = _atd_write_bool(self.hash)
+        return res
 
     @classmethod
-    def from_json_string(cls, x: str) -> "RunResponse":
+    def from_json_string(cls, x: str) -> "RunOps":
         return cls.from_json(json.loads(x))
 
     def to_json_string(self, **kw: Any) -> str:
@@ -398,6 +582,7 @@ class RunParams:
 
     st: int
     tac: str
+    opts: Optional[RunOps] = None
 
     @classmethod
     def from_json(cls, x: Any) -> "RunParams":
@@ -413,6 +598,7 @@ class RunParams:
                     if "tac" in x
                     else _atd_missing_json_field("RunParams", "tac")
                 ),
+                opts=RunOps.from_json(x["opts"]) if "opts" in x else None,
             )
         else:
             _atd_bad_json("RunParams", x)
@@ -421,6 +607,8 @@ class RunParams:
         res: Dict[str, Any] = {}
         res["st"] = _atd_write_int(self.st)
         res["tac"] = _atd_write_string(self.tac)
+        if self.opts is not None:
+            res["opts"] = (lambda x: x.to_json())(self.opts)
         return res
 
     @classmethod
@@ -569,41 +757,6 @@ class PremisesParams:
 
     @classmethod
     def from_json_string(cls, x: str) -> "PremisesParams":
-        return cls.from_json(json.loads(x))
-
-    def to_json_string(self, **kw: Any) -> str:
-        return json.dumps(self.to_json(), **kw)
-
-
-@dataclass
-class InitParams:
-    """Original type: init_params = { ... }"""
-
-    root: str
-    debug: bool = field(default_factory=lambda: False)
-
-    @classmethod
-    def from_json(cls, x: Any) -> "InitParams":
-        if isinstance(x, dict):
-            return cls(
-                root=(
-                    _atd_read_string(x["root"])
-                    if "root" in x
-                    else _atd_missing_json_field("InitParams", "root")
-                ),
-                debug=_atd_read_bool(x["debug"]) if "debug" in x else False,
-            )
-        else:
-            _atd_bad_json("InitParams", x)
-
-    def to_json(self) -> Any:
-        res: Dict[str, Any] = {}
-        res["root"] = _atd_write_string(self.root)
-        res["debug"] = _atd_write_bool(self.debug)
-        return res
-
-    @classmethod
-    def from_json_string(cls, x: str) -> "InitParams":
         return cls.from_json(json.loads(x))
 
     def to_json_string(self, **kw: Any) -> str:

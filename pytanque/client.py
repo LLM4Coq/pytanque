@@ -19,28 +19,29 @@ from .protocol import (
     Request,
     Response,
     Failure,
-    InitParams,
     StartParams,
+    RunOps,
     RunParams,
     GoalsParams,
     PremisesParams,
-    RunResponse,
+    State,
     GoalsResponse,
     PremisesResponse,
-    CurrentState,
-    ProofFinished,
+    Inspect,
+    StateEqualParams,
+    StateEqualResponse,
+    StateHashParams,
+    StateHashResponse,
 )
 
 Params = Union[
-    InitParams,
     StartParams,
     RunParams,
     GoalsParams,
     PremisesParams,
+    StateEqualParams,
+    StateHashParams,
 ]
-
-Env = int
-State = Union[CurrentState, ProofFinished]
 
 logger = logging.getLogger(__name__)
 
@@ -51,8 +52,6 @@ class PetanqueError(Exception):
 
 def mk_request(id: int, params: Params) -> Request:
     match params:
-        case InitParams():
-            return Request(id, "petanque/init", params.to_json())
         case StartParams():
             return Request(id, "petanque/start", params.to_json())
         case RunParams():
@@ -61,6 +60,10 @@ def mk_request(id: int, params: Params) -> Request:
             return Request(id, "petanque/goals", params.to_json())
         case PremisesParams():
             return Request(id, "petanque/premises", params.to_json())
+        case StateEqualParams():
+            return Request(id, "petanque/state/eq", params.to_json())
+        case StateHashParams():
+            return Request(id, "petanque/state/hash", params.to_json())
         case _:
             raise PetanqueError("Invalid request params")
 
@@ -78,7 +81,6 @@ class Pytanque:
         self.port = port
         self.id = 0
         self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.env = 0
         self.file = ""
         self.thm = ""
 
@@ -124,17 +126,6 @@ class Pytanque:
             failure = Failure.from_json_string(raw.decode())
             raise PetanqueError(failure.error)
 
-    def init(self, *, root: str) -> Env:
-        """
-        Initialize Rocq enviorment (must only be called once).
-        """
-        path = os.path.abspath(root)
-        uri = pathlib.Path(path).as_uri()
-        resp = self.query(InitParams(uri))
-        self.env = resp.result
-        logger.info(f"Init success {self.env=}")
-        return int(resp.result)
-
     def start(self, *, file: str, thm: str) -> State:
         """
         Start the proof of [thm] defined in [file].
@@ -143,24 +134,26 @@ class Pytanque:
         self.thm = thm
         path = os.path.abspath(file)
         uri = pathlib.Path(path).as_uri()
-        resp = self.query(StartParams(self.env, uri, self.thm))
+        resp = self.query(StartParams(uri, self.thm))
         logger.info(f"Start success.")
-        return CurrentState(resp.result)
+        return State(resp.result, proof_finished=False)
 
-    def run_tac(self, state: State, tac: str) -> State:
+    def run_tac(
+        self, state: State, tac: str, run_ops: Optional[RunOps] = None
+    ) -> State:
         """
         Execute on tactic.
         """
-        resp = self.query(RunParams(state.value, tac))
-        res = RunResponse.from_json(resp.result)
+        resp = self.query(RunParams(state.st, tac, run_ops))
+        res = State.from_json(resp.result)
         logger.info(f"Run tac {tac}.")
-        return res.value
+        return res
 
     def goals(self, state: State) -> GoalsResponse:
         """
         Return the list of current goals.
         """
-        resp = self.query(GoalsParams(state.value))
+        resp = self.query(GoalsParams(state.st))
         res = GoalsResponse.from_json(resp.result)
         logger.info(f"Current goals: {res.goals}")
         return res
@@ -169,9 +162,27 @@ class Pytanque:
         """
         Return the list of accessible premises.
         """
-        resp = self.query(PremisesParams(state.value))
+        resp = self.query(PremisesParams(state.st))
         res = PremisesResponse.from_json(resp.result)
         logger.info(f"Retrieved {len(res.value)} premises")
+        return res.value
+
+    def state_equal(self, st1: State, st2: State, kind: Inspect) -> Any:
+        """
+        Check if two states are equal.
+        """
+        resp = self.query(StateEqualParams(kind, st1.st, st2.st))
+        res = StateEqualResponse.from_json(resp.result)
+        logger.info(f"States equality {st1.st} = {st2.st} : {res.value}")
+        return res.value
+
+    def state_hash(self, state: State) -> Any:
+        """
+        Return the hash of a state.
+        """
+        resp = self.query(StateHashParams(state.st))
+        res = StateHashResponse.from_json(resp.result)
+        logger.info(f"States hash {state.st} = {res.value}")
         return res.value
 
     def __exit__(
