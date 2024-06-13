@@ -4,7 +4,7 @@ from typing import Any, Callable, TypeVar, Type
 def pp_goal(self: Any) -> str:
     hyps = "\n".join(
         [
-            f"{", ".join(h.names)} {':= ' + h.def_ if h.def_ else ''} : {h.ty}"
+            f"{', '.join(h.names)} {':= ' + h.def_ if h.def_ else ''} : {h.ty}"
             for h in self.hyps
         ]
     )
