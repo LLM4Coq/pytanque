@@ -24,6 +24,7 @@ type request = {
 }
 
 type start_params = {
+    ?pre_commands: string option;
     uri: string;
     thm: string;
 }

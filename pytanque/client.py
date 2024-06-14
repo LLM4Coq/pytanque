@@ -126,7 +126,7 @@ class Pytanque:
             failure = Failure.from_json_string(raw.decode())
             raise PetanqueError(failure.error)
 
-    def start(self, *, file: str, thm: str) -> State:
+    def start(self, file: str, thm: str, pre_commands: Optional[str] = None) -> State:
         """
         Start the proof of [thm] defined in [file].
         """
@@ -134,7 +134,7 @@ class Pytanque:
         self.thm = thm
         path = os.path.abspath(file)
         uri = pathlib.Path(path).as_uri()
-        resp = self.query(StartParams(uri, self.thm))
+        resp = self.query(StartParams(uri, self.thm, pre_commands))
         logger.info(f"Start success.")
         return State(resp.result, proof_finished=False)
 

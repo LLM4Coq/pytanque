@@ -512,6 +512,7 @@ class StartParams:
 
     uri: str
     thm: str
+    pre_commands: Optional[str] = None
 
     @classmethod
     def from_json(cls, x: Any) -> "StartParams":
@@ -527,6 +528,9 @@ class StartParams:
                     if "thm" in x
                     else _atd_missing_json_field("StartParams", "thm")
                 ),
+                pre_commands=(
+                    _atd_read_string(x["pre_commands"]) if "pre_commands" in x else None
+                ),
             )
         else:
             _atd_bad_json("StartParams", x)
@@ -535,6 +539,8 @@ class StartParams:
         res: Dict[str, Any] = {}
         res["uri"] = _atd_write_string(self.uri)
         res["thm"] = _atd_write_string(self.thm)
+        if self.pre_commands is not None:
+            res["pre_commands"] = _atd_write_string(self.pre_commands)
         return res
 
     @classmethod
