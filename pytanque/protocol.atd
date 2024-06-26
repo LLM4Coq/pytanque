@@ -23,19 +23,20 @@ type request = {
     params: abstract
 }
 
-type start_params = {
-    ?pre_commands: string option;
-    uri: string;
-    thm: string;
-}
-
-type run_ops = {
+type opts = {
     ~memo <python default="True">: bool;
     ~hash <python default="True">: bool;
 }
 
+type start_params = {
+    ?pre_commands: string option;
+    ?opts: opts option;
+    uri: string;
+    thm: string;
+}
+
 type run_params = {
-    ?opts: run_ops option;
+    ?opts: opts option;
     st: int;
     tac: string;
 }

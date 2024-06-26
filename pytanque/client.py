@@ -20,7 +20,7 @@ from .protocol import (
     Response,
     Failure,
     StartParams,
-    RunOps,
+    Opts,
     RunParams,
     GoalsParams,
     PremisesParams,
@@ -28,6 +28,8 @@ from .protocol import (
     GoalsResponse,
     PremisesResponse,
     Inspect,
+    InspectPhysical,
+    InspectGoals,
     StateEqualParams,
     StateEqualResponse,
     StateHashParams,
@@ -48,6 +50,10 @@ logger = logging.getLogger(__name__)
 
 class PetanqueError(Exception):
     pass
+
+
+inspectPhysical = Inspect(InspectPhysical())
+inspectGoals = Inspect(InspectGoals())
 
 
 def mk_request(id: int, params: Params) -> Request:
@@ -109,6 +115,7 @@ class Pytanque:
         self.id += 1
         request = mk_request(self.id, params)
         payload = (json.dumps(request.to_json()) + "\n").encode()
+        logger.info(f"Query Payload: {payload}")
         self.socket.sendall(payload)
         fragments = []
         while True:
@@ -118,6 +125,7 @@ class Pytanque:
                 break
         raw = b"".join(fragments)
         try:
+            logger.info(f"Query Response: {raw}")
             resp = Response.from_json_string(raw.decode())
             if resp.id != self.id:
                 raise PetanqueError(f"Sent request {self.id}, got response {resp.id}")
@@ -126,7 +134,13 @@ class Pytanque:
             failure = Failure.from_json_string(raw.decode())
             raise PetanqueError(failure.error)
 
-    def start(self, file: str, thm: str, pre_commands: Optional[str] = None) -> State:
+    def start(
+        self,
+        file: str,
+        thm: str,
+        pre_commands: Optional[str] = None,
+        opts: Optional[Opts] = None,
+    ) -> State:
         """
         Start the proof of [thm] defined in [file].
         """
@@ -134,19 +148,26 @@ class Pytanque:
         self.thm = thm
         path = os.path.abspath(file)
         uri = pathlib.Path(path).as_uri()
-        resp = self.query(StartParams(uri, self.thm, pre_commands))
+        resp = self.query(StartParams(uri, self.thm, pre_commands, opts))
+        res = State.from_json(resp.result)
         logger.info(f"Start success.")
-        return State(resp.result, proof_finished=False)
+        return res
 
     def run_tac(
-        self, state: State, tac: str, run_ops: Optional[RunOps] = None
+        self,
+        state: State,
+        tac: str,
+        opts: Optional[Opts] = None,
+        verbose: Optional[bool] = False,
     ) -> State:
         """
         Execute on tactic.
         """
-        resp = self.query(RunParams(state.st, tac, run_ops))
+        resp = self.query(RunParams(state.st, tac, opts))
         res = State.from_json(resp.result)
         logger.info(f"Run tac {tac}.")
+        if verbose:
+            print(self.goals(res).pp())
         return res
 
     def goals(self, state: State) -> GoalsResponse:

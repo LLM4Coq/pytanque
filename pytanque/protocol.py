@@ -507,12 +507,44 @@ class State:
 
 
 @dataclass
+class Opts:
+    """Original type: opts = { ... }"""
+
+    memo: bool = field(default_factory=lambda: True)
+    hash: bool = field(default_factory=lambda: True)
+
+    @classmethod
+    def from_json(cls, x: Any) -> "Opts":
+        if isinstance(x, dict):
+            return cls(
+                memo=_atd_read_bool(x["memo"]) if "memo" in x else True,
+                hash=_atd_read_bool(x["hash"]) if "hash" in x else True,
+            )
+        else:
+            _atd_bad_json("Opts", x)
+
+    def to_json(self) -> Any:
+        res: Dict[str, Any] = {}
+        res["memo"] = _atd_write_bool(self.memo)
+        res["hash"] = _atd_write_bool(self.hash)
+        return res
+
+    @classmethod
+    def from_json_string(cls, x: str) -> "Opts":
+        return cls.from_json(json.loads(x))
+
+    def to_json_string(self, **kw: Any) -> str:
+        return json.dumps(self.to_json(), **kw)
+
+
+@dataclass
 class StartParams:
     """Original type: start_params = { ... }"""
 
     uri: str
     thm: str
     pre_commands: Optional[str] = None
+    opts: Optional[Opts] = None
 
     @classmethod
     def from_json(cls, x: Any) -> "StartParams":
@@ -531,6 +563,7 @@ class StartParams:
                 pre_commands=(
                     _atd_read_string(x["pre_commands"]) if "pre_commands" in x else None
                 ),
+                opts=Opts.from_json(x["opts"]) if "opts" in x else None,
             )
         else:
             _atd_bad_json("StartParams", x)
@@ -541,41 +574,12 @@ class StartParams:
         res["thm"] = _atd_write_string(self.thm)
         if self.pre_commands is not None:
             res["pre_commands"] = _atd_write_string(self.pre_commands)
+        if self.opts is not None:
+            res["opts"] = (lambda x: x.to_json())(self.opts)
         return res
 
     @classmethod
     def from_json_string(cls, x: str) -> "StartParams":
-        return cls.from_json(json.loads(x))
-
-    def to_json_string(self, **kw: Any) -> str:
-        return json.dumps(self.to_json(), **kw)
-
-
-@dataclass
-class RunOps:
-    """Original type: run_ops = { ... }"""
-
-    memo: bool = field(default_factory=lambda: True)
-    hash: bool = field(default_factory=lambda: True)
-
-    @classmethod
-    def from_json(cls, x: Any) -> "RunOps":
-        if isinstance(x, dict):
-            return cls(
-                memo=_atd_read_bool(x["memo"]) if "memo" in x else True,
-                hash=_atd_read_bool(x["hash"]) if "hash" in x else True,
-            )
-        else:
-            _atd_bad_json("RunOps", x)
-
-    def to_json(self) -> Any:
-        res: Dict[str, Any] = {}
-        res["memo"] = _atd_write_bool(self.memo)
-        res["hash"] = _atd_write_bool(self.hash)
-        return res
-
-    @classmethod
-    def from_json_string(cls, x: str) -> "RunOps":
         return cls.from_json(json.loads(x))
 
     def to_json_string(self, **kw: Any) -> str:
@@ -588,7 +592,7 @@ class RunParams:
 
     st: int
     tac: str
-    opts: Optional[RunOps] = None
+    opts: Optional[Opts] = None
 
     @classmethod
     def from_json(cls, x: Any) -> "RunParams":
@@ -604,7 +608,7 @@ class RunParams:
                     if "tac" in x
                     else _atd_missing_json_field("RunParams", "tac")
                 ),
-                opts=RunOps.from_json(x["opts"]) if "opts" in x else None,
+                opts=Opts.from_json(x["opts"]) if "opts" in x else None,
             )
         else:
             _atd_bad_json("RunParams", x)
