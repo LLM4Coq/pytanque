@@ -869,6 +869,9 @@ class GoalsResponse:
     """Original type: goals_response = { ... }"""
 
     goals: List[Goal]
+    stack: List[Tuple[List[Any], List[Any]]]
+    shelf: List[Any]
+    given_up: List[Any]
 
     @classmethod
     def from_json(cls, x: Any) -> "GoalsResponse":
@@ -879,6 +882,32 @@ class GoalsResponse:
                     if "goals" in x
                     else _atd_missing_json_field("GoalsResponse", "goals")
                 ),
+                stack=(
+                    _atd_read_list(
+                        (
+                            lambda x: (
+                                (
+                                    _atd_read_list((lambda x: x))(x[0]),
+                                    _atd_read_list((lambda x: x))(x[1]),
+                                )
+                                if isinstance(x, list) and len(x) == 2
+                                else _atd_bad_json("array of length 2", x)
+                            )
+                        )
+                    )(x["stack"])
+                    if "stack" in x
+                    else _atd_missing_json_field("GoalsResponse", "stack")
+                ),
+                shelf=(
+                    _atd_read_list((lambda x: x))(x["shelf"])
+                    if "shelf" in x
+                    else _atd_missing_json_field("GoalsResponse", "shelf")
+                ),
+                given_up=(
+                    _atd_read_list((lambda x: x))(x["given_up"])
+                    if "given_up" in x
+                    else _atd_missing_json_field("GoalsResponse", "given_up")
+                ),
             )
         else:
             _atd_bad_json("GoalsResponse", x)
@@ -886,6 +915,20 @@ class GoalsResponse:
     def to_json(self) -> Any:
         res: Dict[str, Any] = {}
         res["goals"] = _atd_write_list((lambda x: x.to_json()))(self.goals)
+        res["stack"] = _atd_write_list(
+            (
+                lambda x: (
+                    [
+                        _atd_write_list((lambda x: x))(x[0]),
+                        _atd_write_list((lambda x: x))(x[1]),
+                    ]
+                    if isinstance(x, tuple) and len(x) == 2
+                    else _atd_bad_python("tuple of length 2", x)
+                )
+            )
+        )(self.stack)
+        res["shelf"] = _atd_write_list((lambda x: x))(self.shelf)
+        res["given_up"] = _atd_write_list((lambda x: x))(self.given_up)
         return res
 
     @classmethod

@@ -65,6 +65,9 @@ type goal <python decorator="add_pp(pp_goal)"> = {
 
 type goals_response <python decorator="add_pp(pp_goals)"> = {
     goals : goal list;
+    stack: (abstract list * abstract list) list;
+    shelf: abstract list;
+    given_up: abstract list
 }
 
 type premises_params = {

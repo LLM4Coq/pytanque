@@ -3,18 +3,14 @@ import json
 import os
 import pathlib
 import logging
-from collections import deque
 from typing import (
     Union,
-    Tuple,
     Any,
-    Deque,
     Optional,
     Type,
 )
 from typing_extensions import Self
 from types import TracebackType
-from dataclasses import dataclass
 from .protocol import (
     Request,
     Response,
@@ -49,7 +45,9 @@ logger = logging.getLogger(__name__)
 
 
 class PetanqueError(Exception):
-    pass
+    def __init__(self, code, message):
+        self.code = code
+        self.message = message
 
 
 inspectPhysical = Inspect(InspectPhysical())
@@ -71,7 +69,7 @@ def mk_request(id: int, params: Params) -> Request:
         case StateHashParams():
             return Request(id, "petanque/state/hash", params.to_json())
         case _:
-            raise PetanqueError("Invalid request params")
+            raise PetanqueError(-32600, "Invalid request params")
 
 
 class Pytanque:
@@ -128,11 +126,13 @@ class Pytanque:
             logger.info(f"Query Response: {raw}")
             resp = Response.from_json_string(raw.decode())
             if resp.id != self.id:
-                raise PetanqueError(f"Sent request {self.id}, got response {resp.id}")
+                raise PetanqueError(
+                    -32603, f"Sent request {self.id}, got response {resp.id}"
+                )
             return resp
         except ValueError:
             failure = Failure.from_json_string(raw.decode())
-            raise PetanqueError(failure.error)
+            raise PetanqueError(failure.error.code, failure.error.message)
 
     def start(
         self,
