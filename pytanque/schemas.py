@@ -51,7 +51,7 @@ def split_proof(proof: str) -> List[str]:
         for s in re.split(r"(?<=\.)\s", b)  # split bullets in tactics
         if (t := s.strip())  # remove empty steps
     ]
-    return tactics
+    return ["{", *tactics, "}"]
 
 
 def check_final_state(pet: Pytanque, state: State) -> bool:
@@ -102,24 +102,27 @@ def fix_proof(
                 r"Coq: \[Focus\] Wrong bullet (?:\++|\-+|\*+): Expecting (?P<bullet>\++|\-+|\*+)",
                 err.message,
             ):  # refocus on correct bullet
-                return fix(
-                    state, idx, [m.group("bullet"), "{", "admit.", "}"] + tactics, False
-                )
+                return fix(state, idx, [m.group("bullet"), "admit."] + tactics, False)
             if re.match(
                 r"Coq: \[Focus\] Wrong bullet (?:\++|\-+|\*+): Current bullet (?:\++|\-+|\*+) is not finished.",
                 err.message,
             ):  # close previous subgoal and retry.
-                return fix(state, idx, ["{", "admit.", "}"] + tactics, False)
+                return fix(state, idx, ["admit."] + tactics, False)
             if re.match(
                 r"Coq: \[Focus\] Wrong bullet (?:\++|\-+|\*+): No more goals.",
                 err.message,
             ):
                 return fix(state, idx, tactics[1:], True)
             else:  # replace tac by admit and drop until next valid tactic.
-                return fix(state, idx, ["{", "admit.", "}"] + tactics[1:], True)
+                return fix(state, idx, ["admit."] + tactics[1:], True)
 
     tactics = split_proof(proof)
-    return fix(state, 0, tactics, False)
+    schema = fix(state, 0, tactics, False)
+    match schema.tactics:  # remove nested admit.
+        case ["{", "admit.", "}"]:
+            schema.tactics = ["admits"]
+            schema.admit_idx = [0]
+    return schema
 
 
 from openai import OpenAI
@@ -217,8 +220,9 @@ class GPTAgent:
             prompt = next_prompt(current_goal)
             print(f"\nUser:\n\n {prompt}")
             sub_proof = self.ask_gpt(prompt)
-            sub_schema = fix_proof(self.pet, next_state, sub_proof)
             print(f"\nAssistant:\n\n {sub_proof}")
+            sub_schema = fix_proof(self.pet, next_state, sub_proof)
+            print(f"\nSubproof:\n{sub_schema}")
 
             schema.tactics += self.schema.tactics[i + 1 : j] + sub_schema.tactics
             schema.admit_states += sub_schema.admit_states
@@ -229,5 +233,8 @@ class GPTAgent:
                 admit_inter[1:],
             )
 
-        self.schema = update(0, self.schema.admit_states, [-1] + self.schema.admit_idx)
+        next_schema = update(0, self.schema.admit_states, [-1] + self.schema.admit_idx)
+        if next_schema.tactics == self.schema.tactics:
+            raise PetanqueError(0, "No proof found")
+        self.schema = next_schema
         return self.schema
