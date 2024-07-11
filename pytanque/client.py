@@ -158,7 +158,7 @@ class Pytanque:
         state: State,
         tac: str,
         opts: Optional[Opts] = None,
-        verbose: Optional[bool] = False,
+        verbose: bool = False,
     ) -> State:
         """
         Execute on tactic.

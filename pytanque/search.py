@@ -1,6 +1,6 @@
 import logging
 from typing import Optional, Tuple, List, Callable, ParamSpec
-from .protocol import State, RunOps
+from .protocol import State, Opts
 from .client import Pytanque, PetanqueError
 import heapq
 
@@ -35,7 +35,7 @@ class DFS(Search):
         super().__init__(**kwargs)
         self.max_depth = max_depth
         self.num_samples = num_samples
-        self.run_ops = RunOps(memo=False, hash=False)
+        self.run_ops = Opts(memo=False, hash=False)
 
     def search(self, state: State) -> Optional[Proof]:
 
