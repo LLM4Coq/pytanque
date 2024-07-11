@@ -109,9 +109,14 @@ def fix_proof(
             ):  # close previous subgoal and retry.
                 return fix(state, idx, ["admit."] + tactics, False)
             if re.match(
+                r"Coq: This proof is focused, but cannot be unfocused this way",
+                err.message,
+            ):  # close current goal and try to unfocus
+                return fix(state, idx, ["admit."] + tactics, False)
+            if re.match(
                 r"Coq: \[Focus\] Wrong bullet (?:\++|\-+|\*+): No more goals.",
                 err.message,
-            ):
+            ):  # Drop bullet
                 return fix(state, idx, tactics[1:], True)
             else:  # replace tac by admit and drop until next valid tactic.
                 return fix(state, idx, ["admit."] + tactics[1:], True)
@@ -207,15 +212,14 @@ class GPTAgent:
         schema = Schema()
 
         def update(
-            idx: int, admit_states: List[State], admit_inter: List[int]
+            i: int, offset: int, admit_states: List[State], admit_idx: List[int]
         ) -> Schema:
             if not admit_states:
-                i = admit_inter[0]
                 schema.tactics += self.schema.tactics[i + 1 :]
                 return schema
 
             next_state = admit_states[0]
-            [i, j, *_] = admit_inter
+            next_i = admit_idx[0]
             current_goal = self.pet.goals(next_state).goals[0].pp()
             prompt = next_prompt(current_goal)
             print(f"\nUser:\n\n {prompt}")
@@ -224,16 +228,17 @@ class GPTAgent:
             sub_schema = fix_proof(self.pet, next_state, sub_proof)
             print(f"\nSubproof:\n{sub_schema}")
 
-            schema.tactics += self.schema.tactics[i + 1 : j] + sub_schema.tactics
+            schema.tactics += self.schema.tactics[i + 1 : next_i] + sub_schema.tactics
             schema.admit_states += sub_schema.admit_states
-            schema.admit_idx += [idx + (j - i - 1) + k for k in sub_schema.admit_idx]
+            schema.admit_idx += [next_i + offset + k for k in sub_schema.admit_idx]
             return update(
-                idx + (j - i - 1) + len(sub_schema.tactics),
+                next_i,
+                offset + len(sub_schema.tactics) - 1,
                 admit_states[1:],
-                admit_inter[1:],
+                admit_idx[1:],
             )
 
-        next_schema = update(0, self.schema.admit_states, [-1] + self.schema.admit_idx)
+        next_schema = update(-1, 0, self.schema.admit_states, self.schema.admit_idx)
         if next_schema.tactics == self.schema.tactics:
             raise PetanqueError(0, "No proof found")
         self.schema = next_schema
