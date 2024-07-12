@@ -118,20 +118,20 @@ class Pytanque:
         fragments = []
         while True:
             chunk = self.socket.recv(size)
-            fragments.append(chunk)
+            fragments.append(chunk.decode())
             if len(chunk) < size:
                 break
-        raw = b"".join(fragments)
+        raw = "".join(fragments)
         try:
             logger.info(f"Query Response: {raw}")
-            resp = Response.from_json_string(raw.decode())
+            resp = Response.from_json_string(raw)
             if resp.id != self.id:
                 raise PetanqueError(
                     -32603, f"Sent request {self.id}, got response {resp.id}"
                 )
             return resp
         except ValueError:
-            failure = Failure.from_json_string(raw.decode())
+            failure = Failure.from_json_string(raw)
             raise PetanqueError(failure.error.code, failure.error.message)
 
     def start(
