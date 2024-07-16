@@ -75,7 +75,7 @@ class Schema:
         return " ".join(steps)
 
 
-def fix_proof(
+def fix_schema(
     pet: Pytanque,
     state: State,
     proof: str,
@@ -140,8 +140,8 @@ def fix_proof(
     return schema
 
 
-def fill_proof(
-    pet: Pytanque, schema, proof_generator: Callable[[State], str]
+def fill_schema(
+    pet: Pytanque, schema: Schema, proof_generator: Callable[[State], str]
 ) -> Schema:
     if not schema:
         raise PetanqueError(0, "Undefined schema")
@@ -159,7 +159,7 @@ def fill_proof(
 
         sub_proof = proof_generator(state)
         print(f"Trying:\n {sub_proof}\n")
-        sub_schema = fix_proof(pet, state, sub_proof)
+        sub_schema = fix_schema(pet, state, sub_proof)
         print(f"Got:\n {sub_schema}\n")
 
         new_schema.tactics += new_schema.tactics[p_ai + 1 : ai] + sub_schema.tactics
