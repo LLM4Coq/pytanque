@@ -8,6 +8,7 @@ from typing import (
     Any,
     Optional,
     Type,
+    List,
 )
 from typing_extensions import Self
 from types import TracebackType
@@ -21,6 +22,7 @@ from .protocol import (
     GoalsParams,
     PremisesParams,
     State,
+    Goal,
     GoalsResponse,
     PremisesResponse,
     Inspect,
@@ -70,6 +72,16 @@ def mk_request(id: int, params: Params) -> Request:
             return Request(id, "petanque/state/hash", params.to_json())
         case _:
             raise PetanqueError(-32600, "Invalid request params")
+
+
+def pp_goal(g: Goal) -> str:
+    hyps = "\n".join(
+        [
+            f"{', '.join(h.names)} {':= ' + h.def_ if h.def_ else ''} : {h.ty}"
+            for h in g.hyps
+        ]
+    )
+    return f"{hyps}\n-----------------------------\n{g.ty}"
 
 
 class Pytanque:
@@ -167,16 +179,20 @@ class Pytanque:
         res = State.from_json(resp.result)
         logger.info(f"Run tac {tac}.")
         if verbose:
-            print(self.goals(res).pp())
+            for i, g in enumerate(self.goals(res)):
+                print(f"\nGoal {i}:\n{g.pp}\n")
         return res
 
-    def goals(self, state: State) -> GoalsResponse:
+    def goals(self, state: State, pretty: bool = True) -> List[Goal]:
         """
         Return the list of current goals.
         """
         resp = self.query(GoalsParams(state.st))
-        res = GoalsResponse.from_json(resp.result)
-        logger.info(f"Current goals: {res.goals}")
+        res = GoalsResponse.from_json(resp.result).goals
+        logger.info(f"Current goals: {res}")
+        if pretty:
+            for g in res:
+                g.pp = pp_goal(g)
         return res
 
     def premises(self, state: State) -> Any:
