@@ -1,7 +1,7 @@
 import os
 from openai import OpenAI
 from .client import Pytanque, PetanqueError, State
-from .schema import Schema, fix_schema, fill_schema
+from .schema import Schema, build_schema, fill_schema
 from .search import BFS
 from typing import Callable
 
@@ -90,7 +90,6 @@ class GPTAgent:
         self.pet = pet
         self.messages = []
         self.schema = Schema()
-        self.proof = []
 
     def ask_gpt(self, prompt: str, n: int = 1) -> str:
         self.messages.append({"role": "user", "content": prompt})
@@ -106,10 +105,10 @@ class GPTAgent:
     def start(self, context, state) -> Schema:
         current_goal = self.pet.goals(state)[0].pp
         proof = self.ask_gpt(init_prompt(context, current_goal))
-        self.schema = fix_schema(self.pet, state, proof)
+        self.schema = build_schema(self.pet, state, proof)
         return self.schema
 
-    def schema_generator(self, state) -> str:
+    def subproof_generator(self, state) -> str:
         current_goal = self.pet.goals(state)[0].pp
         prompt = next_prompt(current_goal)
         return self.ask_gpt(prompt)
@@ -144,35 +143,7 @@ class GPTAgent:
         return "admit."
 
     def next(self, proof_generator: Callable[[State], str]) -> Schema:
-        if not self.schema:
-            raise PetanqueError(0, "Undefined schema")
-
-        assert len(self.schema.admit_idx) == len(self.schema.admit_states)
-
-        schema = Schema()
-
-        offset = 0
-        p_ai = -1
-
-        for state, ai, err in zip(
-            self.schema.admit_states, self.schema.admit_idx, self.schema.admit_errors
-        ):
-
-            sub_proof = proof_generator(state)
-            print(f"Trying:\n {sub_proof}\n")
-            sub_schema = fix_schema(self.pet, state, sub_proof)
-            print(f"Got:\n {sub_schema}\n")
-
-            schema.tactics += self.schema.tactics[p_ai + 1 : ai] + sub_schema.tactics
-            schema.admit_states += sub_schema.admit_states
-            schema.admit_errors += sub_schema.admit_errors
-            schema.admit_idx += [ai + offset + k for k in sub_schema.admit_idx]
-
-            offset += len(sub_schema.tactics) - 1
-            p_ai = ai
-
-        schema.tactics += self.schema.tactics[p_ai + 1 :]
-
+        schema = fill_schema(self.pet, self.schema, proof_generator)
         if schema.tactics == self.schema.tactics:
             raise PetanqueError(0, "No proof found")
         self.schema = schema
@@ -191,7 +162,7 @@ class GPTAgent:
                 raise PetanqueError(0, "No proof found")
             if not self.schema.admit_states:
                 return self.schema
-            self.next(self.schema_generator)
+            self.next(self.subproof_generator)
             return search(depth - 1)
 
         return search(max_depth)

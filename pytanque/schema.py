@@ -159,7 +159,7 @@ def fill_schema(
         sub_schema = build_schema(pet, state, sub_proof)
         print(f"Got:\n {sub_schema}\n")
 
-        new_schema.tactics += new_schema.tactics[p_ai + 1 : ai] + sub_schema.tactics
+        new_schema.tactics += schema.tactics[p_ai + 1 : ai] + sub_schema.tactics
         new_schema.admit_states += sub_schema.admit_states
         new_schema.admit_errors += sub_schema.admit_errors
         new_schema.admit_idx += [ai + offset + k for k in sub_schema.admit_idx]
