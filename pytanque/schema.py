@@ -56,8 +56,8 @@ def split_proof(proof: str) -> List[str]:
 
 
 def check_final_state(pet: Pytanque, state: State) -> bool:
-    g = pet.goals(state)
-    return not g.goals and all(e == ([], []) for e in g.stack)
+    goals = pet.goals(state)
+    return not goals and all(e == ([], []) for e in goals)
 
 
 @dataclass
@@ -75,7 +75,7 @@ class Schema:
         return " ".join(steps)
 
 
-def fix_schema(
+def build_schema(
     pet: Pytanque,
     state: State,
     proof: str,
@@ -143,9 +143,6 @@ def fix_schema(
 def fill_schema(
     pet: Pytanque, schema: Schema, proof_generator: Callable[[State], str]
 ) -> Schema:
-    if not schema:
-        raise PetanqueError(0, "Undefined schema")
-
     assert len(schema.admit_idx) == len(schema.admit_states)
 
     new_schema = Schema()
@@ -159,7 +156,7 @@ def fill_schema(
 
         sub_proof = proof_generator(state)
         print(f"Trying:\n {sub_proof}\n")
-        sub_schema = fix_schema(pet, state, sub_proof)
+        sub_schema = build_schema(pet, state, sub_proof)
         print(f"Got:\n {sub_schema}\n")
 
         new_schema.tactics += new_schema.tactics[p_ai + 1 : ai] + sub_schema.tactics
