@@ -169,7 +169,7 @@ def fill_schema(
 
     new_schema.tactics += schema.tactics[p_ai + 1 :]
 
-    if new_schema.tactics == schema.tactics:
-        raise PetanqueError(0, "No proof found")
+    # if new_schema.tactics == schema.tactics:
+    #     raise PetanqueError(0, "No proof found")
     schema = new_schema
     return schema

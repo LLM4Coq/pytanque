@@ -81,7 +81,7 @@ def pp_goal(g: Goal) -> str:
             for h in g.hyps
         ]
     )
-    return f"{hyps}\n-----------------------------\n{g.ty}"
+    return f"{hyps}\n|-{g.ty}"
 
 
 class Pytanque:
