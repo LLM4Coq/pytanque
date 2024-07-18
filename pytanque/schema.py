@@ -44,7 +44,10 @@ def remove_comments(code):
     return cleaned_code
 
 
-def split_proof(proof: str) -> List[str]:
+def split_proof(
+    proof: str,
+    add_delimiter: bool = True,
+) -> List[str]:
     raw = remove_comments(proof)  # remove comments
     tactics = [
         t
@@ -52,7 +55,9 @@ def split_proof(proof: str) -> List[str]:
         for s in re.split(r"(?<=\.)\s", b)  # split bullets in tactics
         if (t := s.strip())  # remove empty steps
     ]
-    return ["{", *tactics, "}"]
+    if add_delimiter:
+        return ["{", *tactics, "}"]
+    return tactics
 
 
 def check_final_state(pet: Pytanque, state: State) -> bool:
@@ -131,7 +136,7 @@ def build_schema(
                 schema.admit_errors.append(err.message)
                 return fix(state, idx, ["admit."] + tactics[1:], True)
 
-    tactics = split_proof(proof)
+    tactics = split_proof(proof, add_delimiter=True)
     schema = fix(state, 0, tactics, False)
     match schema.tactics:  # remove nested admit.
         case ["{", "admit.", "}"]:
@@ -169,7 +174,5 @@ def fill_schema(
 
     new_schema.tactics += schema.tactics[p_ai + 1 :]
 
-    # if new_schema.tactics == schema.tactics:
-    #     raise PetanqueError(0, "No proof found")
     schema = new_schema
     return schema
