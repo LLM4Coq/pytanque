@@ -69,7 +69,7 @@ rewrite <- I. reflexivity.
 </proof>
 </example>
 
-Think before you write the proof in <thinking> tags. First explain the goal. Then describe the proof step by step. Finally write the corresponding Coq proof in <proof> tags using your analysis.
+Think before you write the proof in <thinking> tags. First explain the goal. Then describe the proof step by step. Finally write the corresponding Coq proof in <proof> tags using your analysis. Do not hesitate do use advanced tactics such as lia if they are imported in the context.
 
 Here is the context and definitions:
 <context>
@@ -99,10 +99,14 @@ class GPTAgent:
         self.messages = []
         self.schema = Schema()
 
+    def reset(self):
+        self.messages = []
+        self.schema = Schema()
+
     def ask_gpt(self, prompt: str, n: int = 1) -> str:
         self.messages.append({"role": "user", "content": prompt})
         resp = client.chat.completions.create(
-            messages=self.messages, model="gpt-4o", n=n
+            messages=self.messages, model="gpt-4o-mini", n=n
         )
         content = resp.choices[0].message.content
         if not content:
@@ -137,7 +141,7 @@ class GPTAgent:
 
         state = self.pet.start(file=file_name, thm=thm_name)
         self.start(context, state)
-        print(f"Initial schema\n{self.schema}\n")
+        # print(f"Initial schema\n{self.schema}\n")
 
         def search(depth: int) -> Schema:
             if depth == 0:

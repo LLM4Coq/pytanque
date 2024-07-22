@@ -171,10 +171,13 @@ class Pytanque:
         tac: str,
         opts: Optional[Opts] = None,
         verbose: bool = False,
+        timeout: Optional[int] = None,
     ) -> State:
         """
         Execute on tactic.
         """
+        if timeout:
+            tac = f"Timeout {timeout} {tac}"
         resp = self.query(RunParams(state.st, tac, opts))
         res = State.from_json(resp.result)
         logger.info(f"Run tac {tac}.")

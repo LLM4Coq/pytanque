@@ -4,6 +4,9 @@ from .search import BFS
 from typing import Optional, List, Callable
 import re
 from dataclasses import dataclass, field
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 def remove_comments(code):
@@ -51,8 +54,8 @@ def split_proof(
     raw = remove_comments(proof)  # remove comments
     tactics = [
         t
-        for b in re.split(r"(\++|\*+|\-+|{|})", raw)  # split proof in bullets
-        for s in re.split(r"(?<=\.)\s", b)  # split bullets in tactics
+        for b in re.split(r"(?<=\.)\s+(\++|\*+|\-+|{|})", raw)  # split proof in bullets
+        for s in re.split(r"(?<=\.)\s+", b)  # split bullets in tactics
         if (t := s.strip())  # remove empty steps
     ]
     if add_delimiter:
@@ -85,6 +88,7 @@ def build_schema(
     state: State,
     proof: str,
     opts: Optional[Opts] = None,
+    timeout: Optional[int] = 10,
 ) -> Schema:
 
     schema = Schema()
@@ -95,7 +99,7 @@ def build_schema(
 
         tac = tactics[0]
         try:
-            next_state = pet.run_tac(state, tac, opts)
+            next_state = pet.run_tac(state, tac, opts, timeout=timeout)
             schema.tactics.append(tac)
             if tac == "admit.":
                 schema.admit_idx.append(idx)
@@ -142,6 +146,7 @@ def build_schema(
         case ["{", "admit.", "}"]:
             schema.tactics = ["admit."]
             schema.admit_idx = [0]
+    logger.info(f"Initial Schema:\n{schema}")
     return schema
 
 
@@ -160,9 +165,9 @@ def fill_schema(
     ):
 
         sub_proof = proof_generator(state)
-        print(f"Trying:\n {sub_proof}\n")
+        logger.info(f"Trying:\n{sub_proof}")
         sub_schema = build_schema(pet, state, sub_proof)
-        print(f"Got:\n {sub_schema}\n")
+        logger.info(f"Sub-schema:\n{sub_proof}")
 
         new_schema.tactics += schema.tactics[p_ai + 1 : ai] + sub_schema.tactics
         new_schema.admit_states += sub_schema.admit_states
