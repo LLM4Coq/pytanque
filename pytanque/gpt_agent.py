@@ -2,8 +2,8 @@ import os
 from openai import OpenAI
 from .client import Pytanque, PetanqueError, State
 from .schema import Schema, build_schema, fill_schema
-from .search import BFS
 from typing import Callable
+import re
 
 client = OpenAI(
     project=os.environ["OPENAI_PROJECT"],
@@ -11,37 +11,65 @@ client = OpenAI(
 )
 
 
-def init_prompt(context: str, goal: str) -> str:
-    return f"""
-I want you to prove a theorem using the Coq proof assistant.
-I will give you the context and a description of the goal.
-Answer with a single code block containing the proof. Do not repeat the context, do no restate the theorem, and don't try to explain the code. Always name hypothesis new equations.  
+init_prompt = """ 
+Your task is to prove a theorem using the Coq proof assistant.
+For each theorem, I will give you the goal to prove in Coq syntax.
 
-Here is an example of a response:
-```
-intros.
-induction n.
-- lia.
-- lia.
-```
+Here are a few examples:
+
+<example>
+<goal>
+n, m, p : nat
+|- nat, n + (m + p) = m + (n + p)
+</goal>
+
+<proof>
+rewrite Nat.add_assoc. rewrite Nat.add_assoc.
+assert (n + m = m + n) as H by apply Nat.add_comm.
+rewrite H. reflexivity.
+</proof>
+</example>
 
 
-Ready?
+<example>
+<context>
+<goal>
+|- forall n:nat, n + 0 = n
+</goal>
 
-Here is the context with some definitions.
-```
-{context}
-```
+<proof>
+intros n. induction n as [| n' IHn'].
+- reflexivity.
+- simpl. rewrite -> IHn'. reflexivity.
+</proof>
+</example>
 
-And here is the current goal:
-```
+<example>
+<goal>
+f nat -> nat 
+I forall n : nat, n = f (f n) 
+n1n2 nat 
+H f n1 = f n2 
+|- n1 = n2
+</goal>
+
+<proof>
+rewrite (I n1). rewrite H.
+rewrite <- I. reflexivity.
+</proof>
+</example>
+
+Think before you write the proof in <thinking> tags. First explain the goal. Then describe the proof step by step. Finally write the corresponding Coq proof in <proof> tags using your analysis.
+
+Ready? Here is the goal.
+<goal>
 {goal}
-```
+</goal>
+
+Take a deep breath and walk me through the proof.
 """
 
-
-def next_prompt(goal: str) -> str:
-    return f"""
+next_prompt = """  
 Now the goal is:
 ```
 {goal}
@@ -50,44 +78,14 @@ What is the proof?
 """
 
 
-def tactics_prompt(goal: str, num_samples: int) -> str:
-    return f"""
-Let's play a game.
-We are trying to prove a theorem using the Coq proof assistant.
-I will give you the current state of the prover as a code block, and you answer with a list of {num_samples} possible tactics, ordered from the most promising one to the least promising one. Each tactics should be associated to a confidence score, i.e., a positive number.
-
-For instance, here is a possible state:
-
-```
-n  : nat
-IHn  : 2 * n = n + n
------------------------------
-2 * S n = S n + S n
-```
-
-And here is a possible answer:
-
-```
-[("lia.", 0.8), ("auto.", 0.6), ("simpl.", 0.4), ...]
-```
-
-Answer with a single code block.
-Ready? Take a deep breath.
-
-Here is your goal:
-
-```
-{goal}
-```
-"""
-
-
-import ast
-
-
 class GPTAgent:
-    def __init__(self, pet: Pytanque):
+    def __init__(self, pet: Pytanque, logfile):
         self.pet = pet
+        self.messages = []
+        self.schema = Schema()
+        self.logfile = logfile
+
+    def reset(self):
         self.messages = []
         self.schema = Schema()
 
@@ -97,65 +95,44 @@ class GPTAgent:
             messages=self.messages, model="gpt-4o", n=n
         )
         content = resp.choices[0].message.content
+        with open(self.logfile, "a") as file:
+            print(f"User: {prompt}\n", file=file)
+            print(f"GPT: {content}\n\n", file=file)
         if not content:
             raise PetanqueError(1, "GPT Error")
         self.messages.append({"role": "assistant", "content": content})
-        return content
+        tag_pattern = r"<proof>(.*?)</proof>"
+        if match := re.search(tag_pattern, content, re.DOTALL):
+            return match.group(1).strip()
+        md_pattern = r"```coq(.*?)```"
+        if match := re.search(md_pattern, content, re.DOTALL):
+            return match.group(1).strip()
+        raise PetanqueError(1, "GPT Error")
 
-    def start(self, context, state) -> Schema:
+    def start(self, state: State) -> Schema:
         current_goal = self.pet.goals(state)[0].pp
-        proof = self.ask_gpt(init_prompt(context, current_goal))
+        prompt = init_prompt.format(goal=current_goal)
+        proof = self.ask_gpt(prompt)
         self.schema = build_schema(self.pet, state, proof)
         return self.schema
 
-    def subproof_generator(self, state) -> str:
+    def subproof_generator(self, state: State) -> str:
         current_goal = self.pet.goals(state)[0].pp
-        prompt = next_prompt(current_goal)
+        prompt = next_prompt.format(goal=current_goal)
         return self.ask_gpt(prompt)
-
-    def bfs_generator(self, state) -> str:
-
-        num_samples = 10
-        max_iters = 10
-
-        def gen(state, num_samples):
-            current_goal = self.pet.goals(state)[0].pp
-            code = self.ask_gpt(tactics_prompt(current_goal, num_samples))
-
-            # Remove code block delimiter
-            code = code.strip()
-            if code.startswith("```"):
-                code = code[3:]
-            if code.endswith("```"):
-                code = code[:-3]
-            code = code.strip()
-
-            tactics, scores = list(zip(*ast.literal_eval(code)))
-            return (
-                list(map(lambda t: f"{t}{'.' if t[-1] != '.' else ''}", tactics)),
-                scores,
-            )
-
-        bfs = BFS(max_iters, num_samples, pet=self.pet, tactic_generator=gen)
-        proof = bfs.search(state)
-        if proof:
-            return " ".join(proof)
-        return "admit."
 
     def next(self, proof_generator: Callable[[State], str]) -> Schema:
         schema = fill_schema(self.pet, self.schema, proof_generator)
-        if schema.tactics == self.schema.tactics:
-            raise PetanqueError(0, "No proof found")
         self.schema = schema
         return self.schema
 
     def recursive_search(
-        self, context, file_name: str, thm_name: str, max_depth: int = 5
+        self, file_name: str, thm_name: str, max_depth: int = 5
     ) -> Schema:
 
         state = self.pet.start(file=file_name, thm=thm_name)
-        self.start(context, state)
-        print(f"Initial schema\n{self.schema}\n")
+        self.start(state)
+        # print(f"Initial schema\n{self.schema}\n")
 
         def search(depth: int) -> Schema:
             if depth == 0:
@@ -166,9 +143,3 @@ class GPTAgent:
             return search(depth - 1)
 
         return search(max_depth)
-
-    def schema_best_first(self, context, file_name: str, thm_name: str):
-        state = self.pet.start(file=file_name, thm=thm_name)
-        self.start(context, state)
-        print(f"Initial schema\n{self.schema}\n")
-        return self.next(self.bfs_generator)
