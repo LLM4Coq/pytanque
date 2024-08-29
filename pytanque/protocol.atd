@@ -94,3 +94,14 @@ type state_hash_params = {
 }
 
 type state_hash_response = int
+
+type set_workspace_params = {
+    debug: bool;
+    root: string;
+}
+
+type toc_params = {
+    uri: string;
+}
+
+type toc_response = (string * abstract) list

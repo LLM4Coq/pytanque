@@ -278,6 +278,77 @@ from .pretty_print import add_pp, pp_goal, pp_goals
 
 
 @dataclass
+class TocResponse:
+    """Original type: toc_response"""
+
+    value: List[Tuple[str, Any]]
+
+    @classmethod
+    def from_json(cls, x: Any) -> "TocResponse":
+        return cls(
+            _atd_read_list(
+                (
+                    lambda x: (
+                        (_atd_read_string(x[0]), (lambda x: x)(x[1]))
+                        if isinstance(x, list) and len(x) == 2
+                        else _atd_bad_json("array of length 2", x)
+                    )
+                )
+            )(x)
+        )
+
+    def to_json(self) -> Any:
+        return _atd_write_list(
+            (
+                lambda x: (
+                    [_atd_write_string(x[0]), (lambda x: x)(x[1])]
+                    if isinstance(x, tuple) and len(x) == 2
+                    else _atd_bad_python("tuple of length 2", x)
+                )
+            )
+        )(self.value)
+
+    @classmethod
+    def from_json_string(cls, x: str) -> "TocResponse":
+        return cls.from_json(json.loads(x))
+
+    def to_json_string(self, **kw: Any) -> str:
+        return json.dumps(self.to_json(), **kw)
+
+
+@dataclass
+class TocParams:
+    """Original type: toc_params = { ... }"""
+
+    uri: str
+
+    @classmethod
+    def from_json(cls, x: Any) -> "TocParams":
+        if isinstance(x, dict):
+            return cls(
+                uri=(
+                    _atd_read_string(x["uri"])
+                    if "uri" in x
+                    else _atd_missing_json_field("TocParams", "uri")
+                ),
+            )
+        else:
+            _atd_bad_json("TocParams", x)
+
+    def to_json(self) -> Any:
+        res: Dict[str, Any] = {}
+        res["uri"] = _atd_write_string(self.uri)
+        return res
+
+    @classmethod
+    def from_json_string(cls, x: str) -> "TocParams":
+        return cls.from_json(json.loads(x))
+
+    def to_json_string(self, **kw: Any) -> str:
+        return json.dumps(self.to_json(), **kw)
+
+
+@dataclass
 class StateHashResponse:
     """Original type: state_hash_response"""
 
@@ -580,6 +651,45 @@ class StartParams:
 
     @classmethod
     def from_json_string(cls, x: str) -> "StartParams":
+        return cls.from_json(json.loads(x))
+
+    def to_json_string(self, **kw: Any) -> str:
+        return json.dumps(self.to_json(), **kw)
+
+
+@dataclass
+class SetWorkspaceParams:
+    """Original type: set_workspace_params = { ... }"""
+
+    debug: bool
+    root: str
+
+    @classmethod
+    def from_json(cls, x: Any) -> "SetWorkspaceParams":
+        if isinstance(x, dict):
+            return cls(
+                debug=(
+                    _atd_read_bool(x["debug"])
+                    if "debug" in x
+                    else _atd_missing_json_field("SetWorkspaceParams", "debug")
+                ),
+                root=(
+                    _atd_read_string(x["root"])
+                    if "root" in x
+                    else _atd_missing_json_field("SetWorkspaceParams", "root")
+                ),
+            )
+        else:
+            _atd_bad_json("SetWorkspaceParams", x)
+
+    def to_json(self) -> Any:
+        res: Dict[str, Any] = {}
+        res["debug"] = _atd_write_bool(self.debug)
+        res["root"] = _atd_write_string(self.root)
+        return res
+
+    @classmethod
+    def from_json_string(cls, x: str) -> "SetWorkspaceParams":
         return cls.from_json(json.loads(x))
 
     def to_json_string(self, **kw: Any) -> str:

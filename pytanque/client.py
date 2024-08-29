@@ -8,6 +8,7 @@ from typing import (
     Any,
     Optional,
     Type,
+    List,
 )
 from typing_extensions import Self
 from types import TracebackType
@@ -21,6 +22,7 @@ from .protocol import (
     GoalsParams,
     PremisesParams,
     State,
+    Goal,
     GoalsResponse,
     PremisesResponse,
     Inspect,
@@ -30,6 +32,9 @@ from .protocol import (
     StateEqualResponse,
     StateHashParams,
     StateHashResponse,
+    SetWorkspaceParams,
+    TocParams,
+    TocResponse,
 )
 
 Params = Union[
@@ -39,6 +44,8 @@ Params = Union[
     PremisesParams,
     StateEqualParams,
     StateHashParams,
+    SetWorkspaceParams,
+    TocParams,
 ]
 
 logger = logging.getLogger(__name__)
@@ -68,8 +75,22 @@ def mk_request(id: int, params: Params) -> Request:
             return Request(id, "petanque/state/eq", params.to_json())
         case StateHashParams():
             return Request(id, "petanque/state/hash", params.to_json())
+        case SetWorkspaceParams():
+            return Request(id, "petanque/setWorkspace", params.to_json())
+        case TocParams():
+            return Request(id, "petanque/toc", params.to_json())
         case _:
             raise PetanqueError(-32600, "Invalid request params")
+
+
+def pp_goal(g: Goal) -> str:
+    hyps = "\n".join(
+        [
+            f"{', '.join(h.names)} {':= ' + h.def_ if h.def_ else ''} : {h.ty}"
+            for h in g.hyps
+        ]
+    )
+    return f"{hyps}\n|-{g.ty}"
 
 
 class Pytanque:
@@ -153,30 +174,50 @@ class Pytanque:
         logger.info(f"Start success.")
         return res
 
+    def set_workspace(
+        self,
+        debug: bool,
+        dir: str,
+    ):
+        """
+        Set the root directory.
+        """
+        path = os.path.abspath(dir)
+        uri = pathlib.Path(path).as_uri()
+        resp = self.query(SetWorkspaceParams(debug, uri))
+        logger.info(f"Set workspace success.")
+
     def run_tac(
         self,
         state: State,
         tac: str,
         opts: Optional[Opts] = None,
-        verbose: Optional[bool] = False,
+        verbose: bool = False,
+        timeout: Optional[int] = None,
     ) -> State:
         """
         Execute on tactic.
         """
+        if timeout:
+            tac = f"Timeout {timeout} {tac}"
         resp = self.query(RunParams(state.st, tac, opts))
         res = State.from_json(resp.result)
         logger.info(f"Run tac {tac}.")
         if verbose:
-            print(self.goals(res).pp())
+            for i, g in enumerate(self.goals(res)):
+                print(f"\nGoal {i}:\n{g.pp}\n")
         return res
 
-    def goals(self, state: State) -> GoalsResponse:
+    def goals(self, state: State, pretty: bool = True) -> List[Goal]:
         """
         Return the list of current goals.
         """
         resp = self.query(GoalsParams(state.st))
-        res = GoalsResponse.from_json(resp.result)
-        logger.info(f"Current goals: {res.goals}")
+        res = GoalsResponse.from_json(resp.result).goals
+        logger.info(f"Current goals: {res}")
+        if pretty:
+            for g in res:
+                g.pp = pp_goal(g)
         return res
 
     def premises(self, state: State) -> Any:
@@ -204,6 +245,17 @@ class Pytanque:
         resp = self.query(StateHashParams(state.st))
         res = StateHashResponse.from_json(resp.result)
         logger.info(f"States hash {state.st} = {res.value}")
+        return res.value
+
+    def toc(self, file: str) -> Any:
+        """
+        Return the TOC of a file.
+        """
+        path = os.path.abspath(file)
+        uri = pathlib.Path(path).as_uri()
+        resp = self.query(TocParams(uri))
+        res = TocResponse.from_json(resp.result)
+        logger.info(f"Retrieved TOC of {file}.")
         return res.value
 
     def __exit__(
