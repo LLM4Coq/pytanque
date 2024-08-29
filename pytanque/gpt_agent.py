@@ -4,6 +4,8 @@ from .client import Pytanque, PetanqueError, State
 from .schema import Schema, build_schema, fill_schema
 from typing import Callable
 import re
+from copy import deepcopy
+import time
 
 client = OpenAI(
     project=os.environ["OPENAI_PROJECT"],
@@ -79,15 +81,17 @@ What is the proof?
 
 
 class GPTAgent:
-    def __init__(self, pet: Pytanque, logfile):
+    def __init__(self, pet: Pytanque, log_prefix):
         self.pet = pet
         self.messages = []
         self.schema = Schema()
-        self.logfile = logfile
+        self.log_prefix = log_prefix
+        self.logfile_name = f"{log_prefix}_{time.strftime("%y%m%d-%H%M%S")}.log"
 
     def reset(self):
         self.messages = []
         self.schema = Schema()
+        self.logfile_name = f"{self.log_prefix}_{time.strftime("%y%m%d-%H%M%S")}.log"
 
     def ask_gpt(self, prompt: str, n: int = 1) -> str:
         self.messages.append({"role": "user", "content": prompt})
@@ -95,9 +99,9 @@ class GPTAgent:
             messages=self.messages, model="gpt-4o", n=n
         )
         content = resp.choices[0].message.content
-        with open(self.logfile, "a") as file:
-            print(f"User: {prompt}\n", file=file)
-            print(f"GPT: {content}\n\n", file=file)
+        with open(self.logfile_name, "a") as logfile:
+            print(f"User: {prompt}\n", file=logfile)
+            print(f"GPT: {content}\n\n", file=logfile)
         if not content:
             raise PetanqueError(1, "GPT Error")
         self.messages.append({"role": "assistant", "content": content})
@@ -139,7 +143,10 @@ class GPTAgent:
                 raise PetanqueError(0, "No proof found")
             if not self.schema.admit_states:
                 return self.schema
+            p_proof = deepcopy(self.schema.tactics)
             self.next(self.subproof_generator)
+            if p_proof == self.schema.tactics:
+                raise PetanqueError(0, "Looping")
             return search(depth - 1)
 
         return search(max_depth)
