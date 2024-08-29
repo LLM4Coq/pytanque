@@ -32,6 +32,9 @@ from .protocol import (
     StateEqualResponse,
     StateHashParams,
     StateHashResponse,
+    SetWorkspaceParams,
+    TocParams,
+    TocResponse,
 )
 
 Params = Union[
@@ -41,6 +44,8 @@ Params = Union[
     PremisesParams,
     StateEqualParams,
     StateHashParams,
+    SetWorkspaceParams,
+    TocParams,
 ]
 
 logger = logging.getLogger(__name__)
@@ -70,6 +75,10 @@ def mk_request(id: int, params: Params) -> Request:
             return Request(id, "petanque/state/eq", params.to_json())
         case StateHashParams():
             return Request(id, "petanque/state/hash", params.to_json())
+        case SetWorkspaceParams():
+            return Request(id, "petanque/setWorkspace", params.to_json())
+        case TocParams():
+            return Request(id, "petanque/toc", params.to_json())
         case _:
             raise PetanqueError(-32600, "Invalid request params")
 
@@ -165,6 +174,19 @@ class Pytanque:
         logger.info(f"Start success.")
         return res
 
+    def set_workspace(
+        self,
+        debug: bool,
+        dir: str,
+    ):
+        """
+        Set the root directory.
+        """
+        path = os.path.abspath(dir)
+        uri = pathlib.Path(path).as_uri()
+        resp = self.query(SetWorkspaceParams(debug, uri))
+        logger.info(f"Set workspace success.")
+
     def run_tac(
         self,
         state: State,
@@ -223,6 +245,17 @@ class Pytanque:
         resp = self.query(StateHashParams(state.st))
         res = StateHashResponse.from_json(resp.result)
         logger.info(f"States hash {state.st} = {res.value}")
+        return res.value
+
+    def toc(self, file: str) -> Any:
+        """
+        Return the TOC of a file.
+        """
+        path = os.path.abspath(file)
+        uri = pathlib.Path(path).as_uri()
+        resp = self.query(TocParams(uri))
+        res = TocResponse.from_json(resp.result)
+        logger.info(f"Retrieved TOC of {file}.")
         return res.value
 
     def __exit__(

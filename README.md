@@ -27,14 +27,10 @@ Assuming you have a coq file named `tests/foo.v` which contains a theorem `addnC
 from pytanque import Pytanque
 
 with Pytanque("127.0.0.1", 8765) as pet:
-    pet.start(file="./tests/foo.v", thm="addnC")
-    pet.start(file="./tests/foo.v", thm="addnC")
-    pet.run_tac("induction n.")
-    pet.run_tac("simpl.")
-    pet.run_tac("auto.")
-    pet.rollback()
-    pet.rollback()
-    pet.run_tac("by elim: n => //= ? ->.")
+    state = pet.start(file="./examples/foo.v", thm="addnC")
+    state = pet.run_tac(state, "induction n.")
+    state = pet.run_tac(state, "simpl.")
+    state = pet.run_tac(state, "auto.")
 ```
 
 You can quickly try to run this example with
