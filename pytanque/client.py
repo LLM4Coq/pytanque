@@ -127,7 +127,7 @@ class Pytanque:
         self.connect()
         return self
 
-    def query(self, params: Params, size: int = 1024) -> Response:
+    def query(self, params: Params, size: int = 4096) -> Response:
         """
         Send a query to the server using JSON-RPC protocol.
         """
@@ -139,8 +139,9 @@ class Pytanque:
         fragments = []
         while True:
             chunk = self.socket.recv(size)
-            fragments.append(chunk.decode())
-            if len(chunk) < size:
+            f = chunk.decode()
+            fragments.append(f)
+            if f.endswith("\n"):
                 break
         raw = "".join(fragments)
         try:
