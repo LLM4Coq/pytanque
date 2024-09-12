@@ -106,8 +106,6 @@ class Pytanque:
         self.port = port
         self.id = 0
         self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.file = ""
-        self.thm = ""
 
     def connect(self) -> None:
         """
@@ -166,11 +164,9 @@ class Pytanque:
         """
         Start the proof of [thm] defined in [file].
         """
-        self.file = file
-        self.thm = thm
         path = os.path.abspath(file)
         uri = pathlib.Path(path).as_uri()
-        resp = self.query(StartParams(uri, self.thm, pre_commands, opts))
+        resp = self.query(StartParams(uri, thm, pre_commands, opts))
         res = State.from_json(resp.result)
         logger.info(f"Start success.")
         return res
@@ -199,7 +195,7 @@ class Pytanque:
         """
         Execute on tactic.
         """
-        if timeout:
+        if timeout and tac.endswith("."):
             tac = f"Timeout {timeout} {tac}"
         resp = self.query(RunParams(state.st, tac, opts))
         res = State.from_json(resp.result)
