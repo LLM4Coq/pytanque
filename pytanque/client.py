@@ -210,7 +210,10 @@ class Pytanque:
         Return the list of current goals.
         """
         resp = self.query(GoalsParams(state.st))
-        res = GoalsResponse.from_json(resp.result).goals
+        if not resp.result:
+            res = []
+        else: 
+            res = GoalsResponse.from_json(resp.result).goals
         logger.info(f"Current goals: {res}")
         if pretty:
             for g in res:
