@@ -137,7 +137,7 @@ class Pytanque:
         fragments = []
         while True:
             chunk = self.socket.recv(size)
-            f = chunk.decode()
+            f = chunk.decode(errors="ignore")
             fragments.append(f)
             if f.endswith("\n"):
                 break
