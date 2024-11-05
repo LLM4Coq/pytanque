@@ -1,6 +1,6 @@
 # Pytanque
 
-Lightweight communication with the Petanque TCP server.
+Pytanque is a Python API for lightweight communication with the Rocq proof assistant, with applications on machine learning and software engineering
 
 ## Install
 
