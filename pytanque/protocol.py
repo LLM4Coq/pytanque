@@ -274,9 +274,6 @@ def _atd_write_option(
 ############################################################################
 
 
-from .pretty_print import add_pp, pp_goal, pp_goals
-
-
 @dataclass
 class TocResponse:
     """Original type: toc_response"""
@@ -926,7 +923,6 @@ class GoalHyp:
         return json.dumps(self.to_json(), **kw)
 
 
-@add_pp(pp_goal)
 @dataclass
 class Goal:
     """Original type: goal = { ... }"""
@@ -934,6 +930,7 @@ class Goal:
     info: Any
     hyps: List[GoalHyp]
     ty: str
+    pp: Optional[str] = None
 
     @classmethod
     def from_json(cls, x: Any) -> "Goal":
@@ -954,6 +951,7 @@ class Goal:
                     if "ty" in x
                     else _atd_missing_json_field("Goal", "ty")
                 ),
+                pp=_atd_read_string(x["pp"]) if "pp" in x else None,
             )
         else:
             _atd_bad_json("Goal", x)
@@ -963,6 +961,8 @@ class Goal:
         res["info"] = (lambda x: x)(self.info)
         res["hyps"] = _atd_write_list((lambda x: x.to_json()))(self.hyps)
         res["ty"] = _atd_write_string(self.ty)
+        if self.pp is not None:
+            res["pp"] = _atd_write_string(self.pp)
         return res
 
     @classmethod
@@ -973,7 +973,6 @@ class Goal:
         return json.dumps(self.to_json(), **kw)
 
 
-@add_pp(pp_goals)
 @dataclass
 class GoalsResponse:
     """Original type: goals_response = { ... }"""
