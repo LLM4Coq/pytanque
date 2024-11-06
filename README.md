@@ -1,6 +1,6 @@
 # Pytanque
 
-Pytanque is a Python API for lightweight communication with the Rocq proof assistant, with applications on machine learning and software engineering
+Pytanque is a Python API for lightweight communication with the Rocq proof assistant.
 
 ## Install
 
@@ -28,12 +28,12 @@ from pytanque import Pytanque
 
 with Pytanque("127.0.0.1", 8765) as pet:
     state = pet.start(file="./examples/foo.v", thm="addnC")
-    state = pet.run_tac(state, "induction n.")
-    state = pet.run_tac(state, "simpl.")
-    state = pet.run_tac(state, "auto.")
+    state = pet.run_tac(state, "induction n.", verbose=True)
+    state = pet.run_tac(state, "auto.", verbose=True)
+    state = pet.run_tac(state, "lia.", verbose=True)
 ```
 
-You can quickly try to run this example with
+You can quickly try a similar example with
 
 ```
 python examples/foo.py
